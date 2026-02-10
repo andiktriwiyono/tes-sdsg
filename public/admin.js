@@ -448,11 +448,6 @@ loadTeachers().then(() => {
 // IMPORT DATA SISWA
 // ==========================================
 
-// Wait for DOM to be ready
-document.addEventListener('DOMContentLoaded', function() {
-  initImportFeature();
-});
-
 function initImportFeature() {
   // Download template Excel
   const downloadBtn = document.getElementById('download-template-btn');
@@ -461,6 +456,9 @@ function initImportFeature() {
       e.preventDefault();
       downloadTemplate();
     });
+    console.log('✅ Download template button initialized');
+  } else {
+    console.error('❌ Download template button not found');
   }
 
   // Import button click
@@ -469,6 +467,9 @@ function initImportFeature() {
     importBtn.addEventListener('click', () => {
       document.getElementById('import-file-input').click();
     });
+    console.log('✅ Import button initialized');
+  } else {
+    console.error('❌ Import button not found');
   }
 
   // File input change
@@ -508,7 +509,18 @@ function initImportFeature() {
         importBtn.innerHTML = originalText;
       }
     });
+    console.log('✅ File input initialized');
+  } else {
+    console.error('❌ File input not found');
   }
+}
+
+// Initialize immediately if DOM is already loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initImportFeature);
+} else {
+  // DOM already loaded
+  initImportFeature();
 }
 
 function downloadTemplate() {
