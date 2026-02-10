@@ -50,7 +50,10 @@ async function initDatabase() {
       target_meja TEXT DEFAULT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT,
-      meja_asal TEXT DEFAULT NULL
+      meja_asal TEXT DEFAULT NULL,
+      sesi TEXT DEFAULT 'sesi1',
+      escort_name TEXT DEFAULT NULL,
+      escort_phone TEXT DEFAULT NULL
     )
   `);
   
@@ -96,12 +99,14 @@ exports.handler = async (event) => {
         pool_entry_time: row[11],
         tunggu1_entry_time: row[12],
         tunggu2_entry_time: row[13],
-        created_at: row[14],
-        updated_at: row[15],
-        menunggu_dijemput: row[16],
-        target_meja: row[17],
+        menunggu_dijemput: row[14],
+        target_meja: row[15],
+        created_at: row[16],
+        updated_at: row[17],
         meja_asal: row[18],
-        sesi: row[19] || 1
+        sesi: row[19] || 'sesi1',
+        escort_name: row[20],
+        escort_phone: row[21]
       })) : [];
       
       return {
@@ -115,8 +120,14 @@ exports.handler = async (event) => {
       const data = JSON.parse(event.body);
       
       db.run(`
-        INSERT INTO students (no_pendaftaran, nama_murid, jenis_kelamin, nama_orang_tua, status, lokasi, lokasi_asal, sudah_test, test_start_time, test_end_time, pool_entry_time, tunggu1_entry_time, tunggu2_entry_time, menunggu_dijemput, target_meja, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO students (
+          no_pendaftaran, nama_murid, jenis_kelamin, nama_orang_tua, 
+          status, lokasi, lokasi_asal, sudah_test, 
+          test_start_time, test_end_time, pool_entry_time, 
+          tunggu1_entry_time, tunggu2_entry_time, menunggu_dijemput, 
+          target_meja, created_at, sesi, escort_name, escort_phone
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         data.no_pendaftaran,
         data.nama_murid,
@@ -133,7 +144,10 @@ exports.handler = async (event) => {
         data.tunggu2_entry_time || null,
         data.menunggu_dijemput || 0,
         data.target_meja || null,
-        data.created_at || new Date().toISOString()
+        data.created_at || new Date().toISOString(),
+        data.sesi || 'sesi1',
+        data.escort_name || null,
+        data.escort_phone || null
       ]);
 
       saveDatabase(db);
