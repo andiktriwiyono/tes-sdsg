@@ -52,13 +52,16 @@ cd /var/www/antrian-test
 # Install dependencies
 npm install
 
-# Setup database
-npm run setup-db
+# ⚠️ PENTING: Setup database (WAJIB!)
+# Tanpa ini, login tidak akan bisa!
+npm run migrate-vps
 
 # Set permissions
 chmod 755 data
 chmod 644 data/antrian.db
 ```
+
+**CATATAN:** Jika skip `migrate-vps`, semua login tidak akan bisa!
 
 ### 3. Jalankan dengan PM2
 
@@ -170,6 +173,15 @@ pm2 restart antrian-test
 ---
 
 ## 📞 Troubleshooting
+
+**❌ Login tidak bisa:**
+```bash
+cd /var/www/antrian-test
+npm run migrate-vps
+chmod 755 data && chmod 644 data/antrian.db
+pm2 restart antrian-test
+```
+📖 Lihat: `VPS_LOGIN_FIX.md`
 
 **Aplikasi tidak jalan:**
 ```bash

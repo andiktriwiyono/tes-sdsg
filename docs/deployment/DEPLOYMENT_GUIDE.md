@@ -87,24 +87,22 @@ cd /var/www/antrian-test
 # Install dependencies
 npm install
 
-# Setup database (jalankan semua migrations)
-npm run setup-db
-
-# Atau jalankan satu per satu:
-node scripts/init-db.js
-node scripts/add-users-table.js
-node scripts/add-teachers-table.js
-node scripts/add-escort-columns.js
-node scripts/add-meja-asal-column.js
-node scripts/add-sesi-column.js
-
-# (Opsional) Seed data awal untuk testing
-node scripts/seed-real-data.js
+# ⚠️ PENTING: Setup database (WAJIB!)
+# Tanpa ini, login tidak akan bisa!
+npm run migrate-vps
 
 # Set permissions untuk database
 chmod 755 data
 chmod 644 data/antrian.db
+
+# Verifikasi database berhasil dibuat
+ls -la data/antrian.db
 ```
+
+**CATATAN PENTING:** 
+- Script `migrate-vps` akan membuat semua tabel dan user default
+- Jika skip langkah ini, **semua login tidak akan bisa**!
+- Default login: `admin` / `admin123`
 
 ---
 

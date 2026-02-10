@@ -58,7 +58,7 @@ cd /var/www
 sudo mkdir -p antrian-test
 sudo chown -R $USER:$USER antrian-test
 cd antrian-test
-git clone https://github.com/username/antrian-test.git .
+git clone https://github.com/andiktriwiyono/tes-sdsg .
 
 # Setup aplikasi
 npm install

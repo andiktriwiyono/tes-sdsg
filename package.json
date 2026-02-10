@@ -7,7 +7,8 @@
     "start": "node server-local.js",
     "build": "node scripts/init-db.js",
     "seed": "node scripts/seed-data.js",
-    "setup-db": "node scripts/init-db.js && node scripts/add-users-table.js && node scripts/add-teachers-table.js && node scripts/add-escort-columns.js && node scripts/add-meja-asal-column.js && node scripts/add-sesi-column.js"
+    "setup-db": "node scripts/init-db.js && node scripts/add-users-table.js && node scripts/add-teachers-table.js && node scripts/add-escort-columns.js && node scripts/add-meja-asal-column.js && node scripts/add-sesi-column.js",
+    "migrate-vps": "node scripts/migrate-db-vps.js"
   },
   "dependencies": {
     "sql.js": "^1.10.3"

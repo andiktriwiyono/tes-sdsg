@@ -4,6 +4,12 @@ Sistem manajemen antrian test siswa dengan multi-role user, auto-move system, da
 
 ---
 
+## 📚 Dokumentasi Lengkap
+
+**👉 Lihat [INDEX.md](INDEX.md) untuk navigasi lengkap semua dokumentasi**
+
+---
+
 ## 🚀 Quick Start
 
 ### Development Lokal
@@ -14,7 +20,10 @@ npm run dev
 Akses: http://localhost:8888
 
 ### Deployment ke VPS
-📖 **Baca dokumentasi lengkap di [START_HERE.md](START_HERE.md)**
+📖 **Baca dokumentasi lengkap:**
+- **[INDEX.md](INDEX.md)** - 📚 Navigasi semua dokumentasi
+- **[START_HERE.md](START_HERE.md)** - 🎯 Panduan utama deployment
+- **[docs/deployment/QUICK_DEPLOY.md](docs/deployment/QUICK_DEPLOY.md)** - ⚡ Deploy cepat (3 langkah)
 
 ---
 
@@ -40,6 +49,16 @@ Akses: http://localhost:8888
 5. **Meja 1-5** - 5 meja penguji (kapasitas 1 siswa/meja)
 6. **Selesai Test (T1)** - Siswa selesai dari Tunggu 1
 7. **Selesai Test (T2)** - Siswa selesai dari Tunggu 2
+
+### 📊 Sistem Laporan
+- ✅ **Laporan Harian**: Total siswa, sudah test, belum test
+- ✅ **Laporan Per Sesi**: Progress per sesi (1, 2, 3)
+- ✅ **Laporan Per Meja**: Statistik per meja penguji
+- ✅ **Laporan Durasi**: 5 tercepat & 5 terlama
+- ✅ **Detail Siswa**: Tabel lengkap semua siswa
+- ✅ **Export Excel**: Download laporan .xlsx (3 sheets)
+- ✅ **Print Laporan**: Print-friendly format
+- ✅ **Filter Laporan**: Sesi, Gender, Status Test
 
 ### 👥 Role & Permissions
 
@@ -88,21 +107,29 @@ Sistem otomatis membagi siswa berdasarkan nomor pendaftaran:
 
 ## 📚 Dokumentasi Deployment
 
+📖 **[INDEX.md](INDEX.md)** - Navigasi lengkap semua dokumentasi
+
 ### Untuk Deploy ke VPS (tes.sdsunangiri.sch.id)
 
 Ikuti urutan ini:
 
 1. **[START_HERE.md](START_HERE.md)** - 🎯 Panduan utama (MULAI DI SINI!)
-2. **[FIRST_COMMIT.md](FIRST_COMMIT.md)** - Cara commit kode ke Git pertama kali
-3. **[GIT_SETUP.md](GIT_SETUP.md)** - Setup Git repository lengkap
-4. **[QUICK_DEPLOY.md](QUICK_DEPLOY.md)** - Panduan cepat deploy (3 langkah)
-5. **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Panduan lengkap + troubleshooting
-6. **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Checklist deployment
+2. **[docs/git/FIRST_COMMIT.md](docs/git/FIRST_COMMIT.md)** - Cara commit kode ke Git pertama kali
+3. **[docs/git/GIT_SETUP.md](docs/git/GIT_SETUP.md)** - Setup Git repository lengkap
+4. **[docs/deployment/QUICK_DEPLOY.md](docs/deployment/QUICK_DEPLOY.md)** - Panduan cepat deploy (3 langkah)
+5. **[docs/deployment/DEPLOYMENT_GUIDE.md](docs/deployment/DEPLOYMENT_GUIDE.md)** - Panduan lengkap + troubleshooting
+6. **[docs/deployment/DEPLOYMENT_CHECKLIST.md](docs/deployment/DEPLOYMENT_CHECKLIST.md)** - Checklist deployment
+
+### Troubleshooting
+
+- **[docs/troubleshooting/VPS_LOGIN_FIX.md](docs/troubleshooting/VPS_LOGIN_FIX.md)** - Fix login tidak bisa di VPS
+- **[docs/troubleshooting/SOLUSI_LOGIN_VPS.txt](docs/troubleshooting/SOLUSI_LOGIN_VPS.txt)** - Solusi cepat
 
 ### Dokumentasi Sistem
 
 - **[KOORDINATOR_TEST_SYSTEM.md](docs/KOORDINATOR_TEST_SYSTEM.md)** - Sistem Koordinator Test
 - **[POOL_CAPACITY_SYSTEM.md](docs/POOL_CAPACITY_SYSTEM.md)** - Sistem kapasitas Pool Test
+- **[LAPORAN_SYSTEM.md](docs/LAPORAN_SYSTEM.md)** - Sistem Laporan & Export
 - **[QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md)** - Quick reference guide
 - **[DIAGRAM_ALUR.txt](docs/DIAGRAM_ALUR.txt)** - Visual diagram alur
 
@@ -173,7 +200,7 @@ pm2 start ecosystem.config.js
 pm2 save
 ```
 
-📖 **Lihat [QUICK_DEPLOY.md](QUICK_DEPLOY.md) untuk panduan lengkap**
+📖 **Lihat [docs/deployment/QUICK_DEPLOY.md](docs/deployment/QUICK_DEPLOY.md) untuk panduan lengkap**
 
 ---
 
@@ -282,7 +309,7 @@ git stash
 git pull origin main
 ```
 
-📖 **Lihat [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) untuk troubleshooting lengkap**
+📖 **Lihat [docs/deployment/DEPLOYMENT_GUIDE.md](docs/deployment/DEPLOYMENT_GUIDE.md) untuk troubleshooting lengkap**
 
 ---
 
@@ -307,11 +334,14 @@ Jika ada masalah:
 
 ## 🎯 Roadmap
 
-- [ ] Export data ke Excel
-- [ ] Print laporan
-- [ ] Statistik & analytics
+- [x] Export data ke Excel ✅
+- [x] Print laporan ✅
+- [x] Statistik & analytics ✅
 - [ ] Notifikasi real-time
 - [ ] Mobile app (PWA)
+- [ ] Grafik visualisasi (charts)
+- [ ] Export PDF
+- [ ] Filter berdasarkan tanggal
 
 ---
 

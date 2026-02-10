@@ -1,0 +1,35 @@
+===============================================
+🔧 SOLUSI CEPAT: LOGIN TIDAK BISA DI VPS
+===============================================
+
+MASALAH:
+Setelah deploy ke VPS, semua login tidak bisa masuk.
+
+PENYEBAB:
+Database belum dimigrasi/diinisialisasi di VPS.
+
+SOLUSI (3 LANGKAH):
+===============================================
+
+1. Login ke VPS dan masuk ke folder aplikasi:
+   ssh root@your-vps-ip
+   cd /var/www/antrian-test
+
+2. Jalankan migrasi database:
+   node scripts/migrate-db-vps.js
+
+3. Restart aplikasi:
+   pm2 restart antrian-test
+
+===============================================
+
+SELESAI! Sekarang coba login dengan:
+Username: admin
+Password: admin123
+
+===============================================
+
+PANDUAN LENGKAP:
+Lihat file: VPS_LOGIN_FIX.md
+
+===============================================

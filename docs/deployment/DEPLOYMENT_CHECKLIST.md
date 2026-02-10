@@ -53,15 +53,10 @@ Print atau simpan checklist ini untuk memastikan deployment berjalan lancar.
 
 - [ ] `npm install` berhasil dijalankan
 - [ ] Folder `data` sudah dibuat
-- [ ] Database `antrian.db` sudah diinisialisasi
-- [ ] Script migrations sudah dijalankan:
-  - [ ] `init-db.js`
-  - [ ] `add-users-table.js`
-  - [ ] `add-teachers-table.js`
-  - [ ] `add-escort-columns.js`
-  - [ ] `add-meja-asal-column.js`
-  - [ ] `add-sesi-column.js`
+- [ ] **Database sudah dimigrasi dengan `npm run migrate-vps`** ⚠️ PENTING!
+- [ ] Database `antrian.db` sudah ada di folder `data`
 - [ ] Permissions database sudah benar (755 untuk folder, 644 untuk file)
+- [ ] Test login admin/admin123 berhasil
 
 ---
 
