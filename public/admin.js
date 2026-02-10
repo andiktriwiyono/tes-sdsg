@@ -442,3 +442,246 @@ function setupTeacherInputs() {
 loadTeachers().then(() => {
   setupTeacherInputs();
 });
+
+
+// ==========================================
+// IMPORT DATA SISWA
+// ==========================================
+
+// Download template Excel
+document.getElementById('download-template-btn').addEventListener('click', (e) => {
+  e.preventDefault();
+  downloadTemplate();
+});
+
+function downloadTemplate() {
+  // Create template data
+  const templateData = [
+    {
+      'No Pendaftaran': '1',
+      'Nama Murid': 'Contoh Nama Siswa',
+      'Nama Orang Tua': 'Contoh Nama Orang Tua',
+      'Jenis Kelamin': 'L',
+      'Sesi': '1'
+    },
+    {
+      'No Pendaftaran': '2',
+      'Nama Murid': 'Siswa Kedua',
+      'Nama Orang Tua': 'Orang Tua Kedua',
+      'Jenis Kelamin': 'P',
+      'Sesi': '1'
+    }
+  ];
+
+  // Create workbook
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(templateData);
+
+  // Set column widths
+  ws['!cols'] = [
+    { wch: 15 }, // No Pendaftaran
+    { wch: 30 }, // Nama Murid
+    { wch: 30 }, // Nama Orang Tua
+    { wch: 15 }, // Jenis Kelamin
+    { wch: 10 }  // Sesi
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Data Siswa');
+
+  // Download
+  XLSX.writeFile(wb, 'Template_Import_Siswa.xlsx');
+  
+  alert('✅ Template berhasil didownload!\n\nPetunjuk:\n1. Isi data siswa sesuai format\n2. Jenis Kelamin: L (Laki-laki) atau P (Perempuan)\n3. Sesi: 1, 2, atau 3\n4. Simpan dan upload kembali');
+}
+
+// Import button click
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-file-input').click();
+});
+
+// File input change
+document.getElementById('import-file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Validate file type
+  const validTypes = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'application/vnd.ms-excel', // .xls
+    'text/csv' // .csv
+  ];
+
+  if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv)$/i)) {
+    alert('❌ File tidak valid! Gunakan file Excel (.xlsx, .xls) atau CSV (.csv)');
+    e.target.value = '';
+    return;
+  }
+
+  // Show loading
+  const importBtn = document.getElementById('import-btn');
+  const originalText = importBtn.innerHTML;
+  importBtn.disabled = true;
+  importBtn.innerHTML = '<span class="animate-pulse">⏳</span> Processing...';
+
+  try {
+    await importStudentsFromFile(file);
+    e.target.value = ''; // Reset input
+  } catch (error) {
+    console.error('Import error:', error);
+    alert('❌ Error: ' + error.message);
+  } finally {
+    importBtn.disabled = false;
+    importBtn.innerHTML = originalText;
+  }
+});
+
+async function importStudentsFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        // Get first sheet
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+        if (jsonData.length === 0) {
+          throw new Error('File kosong atau format tidak sesuai!');
+        }
+
+        // Validate and transform data
+        const students = [];
+        const errors = [];
+
+        for (let i = 0; i < jsonData.length; i++) {
+          const row = jsonData[i];
+          const rowNum = i + 2; // Excel row number (header is row 1)
+
+          // Get values (support different column names)
+          const noPendaftaran = row['No Pendaftaran'] || row['no_pendaftaran'] || row['No'] || '';
+          const namaMurid = row['Nama Murid'] || row['nama_murid'] || row['Nama'] || '';
+          const namaOrangTua = row['Nama Orang Tua'] || row['nama_orang_tua'] || row['Orang Tua'] || '';
+          const jenisKelamin = (row['Jenis Kelamin'] || row['jenis_kelamin'] || row['Gender'] || '').toString().toUpperCase();
+          const sesi = row['Sesi'] || row['sesi'] || '';
+
+          // Validate required fields
+          if (!noPendaftaran || !namaMurid || !namaOrangTua) {
+            errors.push(`Baris ${rowNum}: Data tidak lengkap (No Pendaftaran, Nama Murid, Nama Orang Tua wajib diisi)`);
+            continue;
+          }
+
+          // Validate jenis kelamin
+          if (jenisKelamin && !['L', 'P'].includes(jenisKelamin)) {
+            errors.push(`Baris ${rowNum}: Jenis Kelamin harus L atau P (${namaMurid})`);
+            continue;
+          }
+
+          // Validate sesi
+          const sesiValue = sesi ? sesi.toString() : '';
+          if (sesiValue && !['1', '2', '3'].includes(sesiValue)) {
+            errors.push(`Baris ${rowNum}: Sesi harus 1, 2, atau 3 (${namaMurid})`);
+            continue;
+          }
+
+          // Auto-assign sesi based on no_pendaftaran if not provided
+          let finalSesi = sesiValue;
+          if (!finalSesi) {
+            const no = parseInt(noPendaftaran);
+            if (no >= 1 && no <= 35) finalSesi = '1';
+            else if (no >= 36 && no <= 71) finalSesi = '2';
+            else if (no >= 72 && no <= 106) finalSesi = '3';
+            else finalSesi = '1'; // default
+          }
+
+          students.push({
+            no_pendaftaran: noPendaftaran.toString(),
+            nama_murid: namaMurid.toString().trim(),
+            nama_orang_tua: namaOrangTua.toString().trim(),
+            jenis_kelamin: jenisKelamin || null,
+            sesi: `sesi${finalSesi}`,
+            lokasi: 'daftar',
+            status: 'active',
+            sudah_test: 0
+          });
+        }
+
+        // Show errors if any
+        if (errors.length > 0) {
+          const showErrors = errors.slice(0, 10).join('\n');
+          const moreErrors = errors.length > 10 ? `\n... dan ${errors.length - 10} error lainnya` : '';
+          
+          if (!confirm(`⚠️ Ditemukan ${errors.length} error:\n\n${showErrors}${moreErrors}\n\nLanjutkan import data yang valid (${students.length} siswa)?`)) {
+            reject(new Error('Import dibatalkan'));
+            return;
+          }
+        }
+
+        if (students.length === 0) {
+          throw new Error('Tidak ada data valid untuk diimport!');
+        }
+
+        // Confirm import
+        if (!confirm(`📥 Import ${students.length} siswa?\n\nData akan ditambahkan ke database.`)) {
+          reject(new Error('Import dibatalkan'));
+          return;
+        }
+
+        // Import to database
+        let successCount = 0;
+        let failCount = 0;
+        const failedStudents = [];
+
+        for (const student of students) {
+          try {
+            const response = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(student)
+            });
+
+            if (response.ok) {
+              successCount++;
+            } else {
+              failCount++;
+              failedStudents.push(student.nama_murid);
+            }
+          } catch (error) {
+            failCount++;
+            failedStudents.push(student.nama_murid);
+          }
+        }
+
+        // Show result
+        let message = `✅ Import selesai!\n\n`;
+        message += `Berhasil: ${successCount} siswa\n`;
+        if (failCount > 0) {
+          message += `Gagal: ${failCount} siswa\n`;
+          if (failedStudents.length > 0) {
+            message += `\nGagal import:\n${failedStudents.slice(0, 5).join('\n')}`;
+            if (failedStudents.length > 5) {
+              message += `\n... dan ${failedStudents.length - 5} lainnya`;
+            }
+          }
+        }
+
+        alert(message);
+
+        // Reload system info
+        loadSystemInfo();
+
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error('Gagal membaca file'));
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+}
