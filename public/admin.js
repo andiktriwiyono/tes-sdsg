@@ -448,92 +448,126 @@ loadTeachers().then(() => {
 // IMPORT DATA SISWA
 // ==========================================
 
-// Download template Excel
-document.getElementById('download-template-btn').addEventListener('click', (e) => {
-  e.preventDefault();
-  downloadTemplate();
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+  initImportFeature();
 });
 
-function downloadTemplate() {
-  // Create template data
-  const templateData = [
-    {
-      'No Pendaftaran': '1',
-      'Nama Murid': 'Contoh Nama Siswa',
-      'Nama Orang Tua': 'Contoh Nama Orang Tua',
-      'Jenis Kelamin': 'L',
-      'Sesi': '1'
-    },
-    {
-      'No Pendaftaran': '2',
-      'Nama Murid': 'Siswa Kedua',
-      'Nama Orang Tua': 'Orang Tua Kedua',
-      'Jenis Kelamin': 'P',
-      'Sesi': '1'
-    }
-  ];
+function initImportFeature() {
+  // Download template Excel
+  const downloadBtn = document.getElementById('download-template-btn');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      downloadTemplate();
+    });
+  }
 
-  // Create workbook
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(templateData);
+  // Import button click
+  const importBtn = document.getElementById('import-btn');
+  if (importBtn) {
+    importBtn.addEventListener('click', () => {
+      document.getElementById('import-file-input').click();
+    });
+  }
 
-  // Set column widths
-  ws['!cols'] = [
-    { wch: 15 }, // No Pendaftaran
-    { wch: 30 }, // Nama Murid
-    { wch: 30 }, // Nama Orang Tua
-    { wch: 15 }, // Jenis Kelamin
-    { wch: 10 }  // Sesi
-  ];
+  // File input change
+  const fileInput = document.getElementById('import-file-input');
+  if (fileInput) {
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-  XLSX.utils.book_append_sheet(wb, ws, 'Data Siswa');
+      // Validate file type
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.ms-excel', // .xls
+        'text/csv' // .csv
+      ];
 
-  // Download
-  XLSX.writeFile(wb, 'Template_Import_Siswa.xlsx');
-  
-  alert('✅ Template berhasil didownload!\n\nPetunjuk:\n1. Isi data siswa sesuai format\n2. Jenis Kelamin: L (Laki-laki) atau P (Perempuan)\n3. Sesi: 1, 2, atau 3\n4. Simpan dan upload kembali');
+      if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv)$/i)) {
+        alert('❌ File tidak valid! Gunakan file Excel (.xlsx, .xls) atau CSV (.csv)');
+        e.target.value = '';
+        return;
+      }
+
+      // Show loading
+      const importBtn = document.getElementById('import-btn');
+      const originalText = importBtn.innerHTML;
+      importBtn.disabled = true;
+      importBtn.innerHTML = '<span class="animate-pulse">⏳</span> Processing...';
+
+      try {
+        await importStudentsFromFile(file);
+        e.target.value = ''; // Reset input
+      } catch (error) {
+        console.error('Import error:', error);
+        alert('❌ Error: ' + error.message);
+      } finally {
+        importBtn.disabled = false;
+        importBtn.innerHTML = originalText;
+      }
+    });
+  }
 }
 
-// Import button click
-document.getElementById('import-btn').addEventListener('click', () => {
-  document.getElementById('import-file-input').click();
-});
-
-// File input change
-document.getElementById('import-file-input').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  // Validate file type
-  const validTypes = [
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-    'application/vnd.ms-excel', // .xls
-    'text/csv' // .csv
-  ];
-
-  if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv)$/i)) {
-    alert('❌ File tidak valid! Gunakan file Excel (.xlsx, .xls) atau CSV (.csv)');
-    e.target.value = '';
-    return;
-  }
-
-  // Show loading
-  const importBtn = document.getElementById('import-btn');
-  const originalText = importBtn.innerHTML;
-  importBtn.disabled = true;
-  importBtn.innerHTML = '<span class="animate-pulse">⏳</span> Processing...';
-
+function downloadTemplate() {
   try {
-    await importStudentsFromFile(file);
-    e.target.value = ''; // Reset input
+    // Check if XLSX is available
+    if (typeof XLSX === 'undefined') {
+      alert('❌ Error: Library Excel belum loaded. Refresh halaman dan coba lagi.');
+      return;
+    }
+
+    // Create template data
+    const templateData = [
+      {
+        'No Pendaftaran': '1',
+        'Nama Murid': 'Contoh Nama Siswa',
+        'Nama Orang Tua': 'Contoh Nama Orang Tua',
+        'Jenis Kelamin': 'L',
+        'Sesi': '1'
+      },
+      {
+        'No Pendaftaran': '2',
+        'Nama Murid': 'Siswa Kedua',
+        'Nama Orang Tua': 'Orang Tua Kedua',
+        'Jenis Kelamin': 'P',
+        'Sesi': '1'
+      },
+      {
+        'No Pendaftaran': '3',
+        'Nama Murid': 'Siswa Ketiga',
+        'Nama Orang Tua': 'Orang Tua Ketiga',
+        'Jenis Kelamin': 'L',
+        'Sesi': '1'
+      }
+    ];
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(templateData);
+
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 15 }, // No Pendaftaran
+      { wch: 30 }, // Nama Murid
+      { wch: 30 }, // Nama Orang Tua
+      { wch: 15 }, // Jenis Kelamin
+      { wch: 10 }  // Sesi
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Siswa');
+
+    // Download
+    XLSX.writeFile(wb, 'Template_Import_Siswa.xlsx');
+    
+    alert('✅ Template berhasil didownload!\n\nPetunjuk:\n1. Isi data siswa sesuai format\n2. Jenis Kelamin: L (Laki-laki) atau P (Perempuan)\n3. Sesi: 1, 2, atau 3\n4. Simpan dan upload kembali');
   } catch (error) {
-    console.error('Import error:', error);
-    alert('❌ Error: ' + error.message);
-  } finally {
-    importBtn.disabled = false;
-    importBtn.innerHTML = originalText;
+    console.error('Download template error:', error);
+    alert('❌ Error download template: ' + error.message + '\n\nCoba refresh halaman dan coba lagi.');
   }
-});
+}
 
 async function importStudentsFromFile(file) {
   return new Promise((resolve, reject) => {

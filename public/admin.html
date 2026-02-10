@@ -366,6 +366,20 @@
 
   <!-- SheetJS for Excel parsing -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- Fallback CDN -->
+  <script>
+    // Check if XLSX loaded, if not try alternative CDN
+    if (typeof XLSX === 'undefined') {
+      console.warn('Primary SheetJS CDN failed, trying fallback...');
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+      script.onerror = function() {
+        console.error('All SheetJS CDNs failed to load');
+        alert('⚠️ Gagal load library Excel. Fitur import/export tidak tersedia. Coba refresh halaman.');
+      };
+      document.head.appendChild(script);
+    }
+  </script>
   <script src="/admin.js"></script>
 </body>
 </html>
