@@ -9,13 +9,9 @@ let draggedStudentId = null;
 let currentUser = null;
 let isMobile = false;
 
-const API_URL = window.location.hostname === 'localhost' 
-  ? '/api/students' 
-  : '/.netlify/functions/students';
-
-const TEACHERS_API_URL = window.location.hostname === 'localhost' 
-  ? '/api/teachers' 
-  : '/.netlify/functions/teachers';
+// API URLs - gunakan /api/* untuk semua environment
+const API_URL = '/api/students';
+const TEACHERS_API_URL = '/api/teachers';
 
 // Detect mobile device
 function detectMobile() {

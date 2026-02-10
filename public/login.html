@@ -79,9 +79,8 @@
       window.location.href = '/';
     }
 
-    const USERS_API_URL = window.location.hostname === 'localhost' 
-      ? '/api/users' 
-      : '/.netlify/functions/users';
+    // API URL - gunakan /api/users untuk semua environment
+    const USERS_API_URL = '/api/users';
 
     // Get users from database
     async function getUsers() {

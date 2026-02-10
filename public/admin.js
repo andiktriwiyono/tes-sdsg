@@ -5,17 +5,10 @@ if (!currentUser.username || currentUser.role !== 'ADMIN') {
   window.location.href = '/';
 }
 
-const API_URL = window.location.hostname === 'localhost' 
-  ? '/api/students' 
-  : '/.netlify/functions/students';
-
-const USERS_API_URL = window.location.hostname === 'localhost' 
-  ? '/api/users' 
-  : '/.netlify/functions/users';
-
-const TEACHERS_API_URL = window.location.hostname === 'localhost' 
-  ? '/api/teachers' 
-  : '/.netlify/functions/teachers';
+// API URLs - gunakan /api/* untuk semua environment
+const API_URL = '/api/students';
+const USERS_API_URL = '/api/users';
+const TEACHERS_API_URL = '/api/teachers';
 
 // Load users from database
 async function getUsers() {
