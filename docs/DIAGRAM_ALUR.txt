@@ -1,0 +1,220 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                    SISTEM ANTRIAN TEST - ALUR LENGKAP                         ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  STEP 1: PENDAFTARAN                                                        │
+│  Role: ADMIN                                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ Tambah siswa baru
+                                    ▼
+                        ┌───────────────────────┐
+                        │   DAFTAR SISWA        │
+                        │   📋 Status: Terdaftar│
+                        └───────────────────────┘
+                                    │
+                                    │ POS_RUANG: Drag/Button
+                                    │ → Tunggu 1 atau Tunggu 2
+                                    ▼
+        ┌───────────────────────────────────────────────────┐
+        │                                                   │
+        ▼                                                   ▼
+┌───────────────────┐                           ┌───────────────────┐
+│ RUANG TUNGGU 1    │                           │ RUANG TUNGGU 2    │
+│ 🕐 FIFO Queue     │                           │ 🕑 FIFO Queue     │
+│ Badge: 📋 Antrian │                           │ Badge: 📋 Antrian │
+│ Timer: ⏱️ Auto 10s│                           │ Timer: ⏱️ Auto 10s│
+└───────────────────┘                           └───────────────────┘
+        │                                                   │
+        │ ⏱️ AUTO-MOVE (10 detik) ← SISTEM OTOMATIS        │
+        │ atau Manual Override (POS_WAWANCARA)             │
+        └───────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  STEP 2: AUTO-MOVE KE POOL TEST (OTOMATIS)                                  │
+│  Role: SISTEM (Background Process)                                          │
+│  Override: POS_WAWANCARA (Manual)                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                        ┌───────────────────────┐
+                        │   POOL RUANG TEST     │
+                        │   📝 FIFO Queue RESET │
+                        │   Badge: 🎯 Antrian 1 │
+                        │          ⏳ Antrian 2+│
+                        └───────────────────────┘
+                                    │
+                                    │ PENGUJI: Claim Antrian 1
+                                    │ (Hanya yang paling depan)
+                                    ▼
+        ┌───────────────────────────────────────────────────────────┐
+        │                                                           │
+        ▼           ▼           ▼           ▼           ▼           │
+    ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐         │
+    │MEJA 1 │  │MEJA 2 │  │MEJA 3 │  │MEJA 4 │  │MEJA 5 │         │
+    │🎯 1/1 │  │🎯 1/1 │  │🎯 1/1 │  │🎯 1/1 │  │🎯 1/1 │         │
+    │⏱️ Timer│  │⏱️ Timer│  │⏱️ Timer│  │⏱️ Timer│  │⏱️ Timer│         │
+    └───────┘  └───────┘  └───────┘  └───────┘  └───────┘         │
+        │           │           │           │           │           │
+        └───────────┴───────────┴───────────┴───────────┘           │
+                                    │                               │
+                                    │ PENGUJI: ✓ Selesai Test      │
+                                    ▼                               │
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  STEP 3: SELESAI TEST (RETURN TO ORIGIN)                                   │
+│  Role: PENGUJI                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ Sistem auto-return berdasarkan asal
+                                    ▼
+        ┌───────────────────────────────────────────────────┐
+        │                                                   │
+        ▼                                                   ▼
+┌───────────────────┐                           ┌───────────────────┐
+│ SELESAI TEST (T1) │                           │ SELESAI TEST (T2) │
+│ ✅ dari Tunggu 1  │                           │ ✅ dari Tunggu 2  │
+│ Badge: ✅ dari T1 │                           │ Badge: ✅ dari T2 │
+└───────────────────┘                           └───────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                           FIFO QUEUE SYSTEM                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  3 ANTRIAN INDEPENDEN:                                                      │
+│                                                                             │
+│  1. TUNGGU 1 QUEUE                                                          │
+│     Timestamp: tunggu1_entry_time                                           │
+│     Sort: Oldest first (FIFO)                                               │
+│     Badge: 📋 Antrian 1, 2, 3, ...                                          │
+│                                                                             │
+│  2. TUNGGU 2 QUEUE                                                          │
+│     Timestamp: tunggu2_entry_time                                           │
+│     Sort: Oldest first (FIFO)                                               │
+│     Badge: 📋 Antrian 1, 2, 3, ...                                          │
+│                                                                             │
+│  3. POOL TEST QUEUE (RESET!)                                                │
+│     Timestamp: pool_entry_time (SET BARU saat masuk Pool)                  │
+│     Sort: Oldest first (FIFO)                                               │
+│     Badge: 🎯 Antrian 1 (hijau) atau ⏳ Antrian 2+ (amber)                  │
+│     Rule: Hanya Antrian 1 yang bisa di-claim penguji                        │
+│                                                                             │
+│  PENTING: Pool Test queue TIDAK bergantung pada Tunggu 1/2 timestamp!      │
+│           Siswa dari T1 dan T2 bersaing berdasarkan pool_entry_time        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                        AUTO-MOVE SYSTEM DETAIL                                ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  COUNTDOWN TIMER:                                                           │
+│                                                                             │
+│  Siswa masuk Tunggu 1/2                                                     │
+│      ↓                                                                      │
+│  Set timestamp: tunggu1_entry_time atau tunggu2_entry_time                 │
+│      ↓                                                                      │
+│  Display countdown:                                                         │
+│      ⏱️ Auto 10s → ⏱️ Auto 9s → ... → ⏱️ Auto 1s → ✓ Siap Pool            │
+│      ↓                                                                      │
+│  Setelah 10 detik:                                                          │
+│      - Sistem auto-move ke Pool Test                                        │
+│      - Set pool_entry_time = NOW (RESET timestamp)                          │
+│      - lokasi_asal = tunggu1 atau tunggu2 (untuk return nanti)             │
+│                                                                             │
+│  MANUAL OVERRIDE:                                                           │
+│      - POS_WAWANCARA bisa drag/button "Pindah Sekarang"                    │
+│      - Langsung pindah tanpa tunggu countdown selesai                       │
+│      - Tetap set pool_entry_time dan lokasi_asal                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                          ROLE & PERMISSIONS                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ADMIN (admin/admin123)                                                     │
+│  ✓ Semua fitur                                                              │
+│  ✓ Tambah siswa                                                             │
+│  ✓ Admin Panel (Reset Data, System Info)                                    │
+│  ✓ Akses semua ruangan                                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  POS_RUANG (posruang/posruang123)                                           │
+│  ✓ Daftar Siswa → Tunggu 1/2                                                │
+│  ✓ View: Daftar, Tunggu 1, Tunggu 2, Selesai Test                          │
+│  ✗ Tidak bisa akses Pool Test dan Meja Penguji                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  POS_WAWANCARA (poswawancara/poswawancara123)                               │
+│  ✓ Manual override: Tunggu 1/2 → Pool Test                                 │
+│  ✓ View: Tunggu 1, Tunggu 2, Pool Test, Selesai Test                       │
+│  ✗ Tidak bisa akses Daftar Siswa dan Meja Penguji                          │
+│  Note: Biasanya tidak perlu manual move (sistem auto-move)                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  PENGUJI_MEJA_1-5 (penguji1-5/penguji123)                                   │
+│  ✓ Claim siswa dari Pool Test (hanya Antrian 1)                            │
+│  ✓ Selesai Test → Return to origin                                         │
+│  ✓ View: Pool Test + Meja sendiri                                          │
+│  ✗ Tidak bisa akses ruangan lain                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                            TIMING CONFIGURATION                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  AUTO_MOVE_DELAY = 10 seconds                                               │
+│  - Waktu tunggu sebelum auto-move ke Pool Test                             │
+│  - Dapat diubah di public/app.js                                            │
+│  - Rekomendasi: 10-15 detik                                                 │
+│                                                                             │
+│  CHECK_INTERVAL = 2 seconds                                                 │
+│  - Sistem check setiap 2 detik untuk auto-move                             │
+│  - Background process, tidak mengganggu user                                │
+│                                                                             │
+│  TIMER_UPDATE = 1 second                                                    │
+│  - Countdown timer update setiap 1 detik                                    │
+│  - Test duration timer update setiap 1 detik                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                              BEST PRACTICES                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+✅ DO:
+  - Biarkan sistem auto-move bekerja (default workflow)
+  - Gunakan manual override hanya untuk kasus khusus
+  - Monitor dashboard untuk melihat distribusi siswa
+  - Claim siswa dengan badge 🎯 Antrian 1 (hijau)
+  - Klik "✓ Selesai Test" segera setelah test selesai
+
+❌ DON'T:
+  - Jangan skip antrian (sistem enforce FIFO ketat)
+  - Jangan claim siswa dengan badge ⏳ Antrian 2+ (tidak bisa)
+  - Jangan lupa klik "Selesai Test" (meja akan penuh)
+  - Jangan manual move semua siswa (biarkan auto-move)
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                 LEGEND                                        ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+📋 = Daftar / List
+🕐 = Ruang Tunggu 1
+🕑 = Ruang Tunggu 2
+📝 = Pool Test
+🎯 = Meja Penguji / Antrian 1 (Ready)
+⏳ = Antrian 2+ (Waiting)
+✅ = Selesai Test
+⏱️ = Timer / Countdown
+👦 = Laki-laki
+👧 = Perempuan
+👨‍👩‍👧 = Orang Tua
+✓ = Success / Complete
+✗ = Not Allowed

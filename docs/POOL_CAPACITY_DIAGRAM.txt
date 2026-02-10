@@ -1,0 +1,366 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║              POOL TEST CAPACITY SYSTEM - VISUAL DIAGRAM                       ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    SCENARIO 1: POOL TEST BELUM PENUH                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────┐                           ┌───────────────────┐
+│ RUANG TUNGGU 1    │                           │ RUANG TUNGGU 2    │
+│ ─────────────────│                           │ ─────────────────│
+│ Siswa A: ⏱️ 10s  │                           │ Siswa D: ⏱️ 8s   │
+│ Siswa B: ⏱️ 7s   │                           │ Siswa E: ⏱️ 5s   │
+│ Siswa C: ⏱️ 3s   │                           │ Siswa F: ⏱️ 2s   │
+└─────────┬─────────┘                           └─────────┬─────────┘
+          │                                               │
+          │ ⏱️ Countdown normal                          │
+          │ Auto-move setelah 10 detik                   │
+          └───────────────────┬───────────────────────────┘
+                              ▼
+                  ┌───────────────────────┐
+                  │   POOL RUANG TEST     │
+                  │   ─────────────────  │
+                  │   [3/5] ← Hijau      │ ← Masih ada slot (2 kosong)
+                  │   ─────────────────  │
+                  │   Siswa 1: 🎯 Antrian 1│
+                  │   Siswa 2: ⏳ Antrian 2│
+                  │   Siswa 3: ⏳ Antrian 3│
+                  │   [ SLOT KOSONG ]     │
+                  │   [ SLOT KOSONG ]     │
+                  └───────────┬───────────┘
+                              │
+                              │ Penguji claim Antrian 1
+                              ▼
+        ┌───────────────────────────────────────────────────────────┐
+        │                    MEJA PENGUJI                           │
+        │   ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐          │
+        │   │Meja1│  │Meja2│  │Meja3│  │Meja4│  │Meja5│          │
+        │   │ 1/1 │  │ 1/1 │  │ 0/1 │  │ 0/1 │  │ 0/1 │          │
+        │   └─────┘  └─────┘  └─────┘  └─────┘  └─────┘          │
+        └───────────────────────────────────────────────────────────┘
+
+STATUS: ✅ NORMAL - Auto-move berjalan lancar
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    SCENARIO 2: POOL TEST PENUH (5/5)                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────┐                           ┌───────────────────┐
+│ RUANG TUNGGU 1    │                           │ RUANG TUNGGU 2    │
+│ ─────────────────│                           │ ─────────────────│
+│ Siswa A: ⏸️ Penuh│ ← Countdown PAUSE         │ Siswa D: ⏸️ Penuh│
+│ Siswa B: ⏸️ Penuh│                           │ Siswa E: ⏸️ Penuh│
+│ Siswa C: ⏸️ Penuh│                           │ Siswa F: ⏸️ Penuh│
+│ Siswa G: ⏱️ 5s   │ ← Belum 10 detik          │ Siswa H: ⏱️ 3s   │
+└─────────┬─────────┘                           └─────────┬─────────┘
+          │                                               │
+          │ ⏸️ Auto-move DI-PAUSE                        │
+          │ Menunggu slot kosong di Pool Test            │
+          └───────────────────┬───────────────────────────┘
+                              ▼
+                  ┌───────────────────────┐
+                  │   POOL RUANG TEST     │
+                  │   ─────────────────  │
+                  │   [5/5] ← Merah      │ ← PENUH!
+                  │   ─────────────────  │
+                  │   Siswa 1: 🎯 Antrian 1│ ← Ready di-claim
+                  │   Siswa 2: ⏳ Antrian 2│
+                  │   Siswa 3: ⏳ Antrian 3│
+                  │   Siswa 4: ⏳ Antrian 4│
+                  │   Siswa 5: ⏳ Antrian 5│
+                  └───────────┬───────────┘
+                              │
+                              │ ⏸️ TIDAK BISA TERIMA SISWA BARU
+                              │ Tunggu penguji claim siswa
+                              ▼
+        ┌───────────────────────────────────────────────────────────┐
+        │                    MEJA PENGUJI                           │
+        │   ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐          │
+        │   │Meja1│  │Meja2│  │Meja3│  │Meja4│  │Meja5│          │
+        │   │ 1/1 │  │ 1/1 │  │ 1/1 │  │ 1/1 │  │ 1/1 │          │
+        │   └─────┘  └─────┘  └─────┘  └─────┘  └─────┘          │
+        └───────────────────────────────────────────────────────────┘
+
+STATUS: ⏸️ PAUSE - Menunggu slot kosong
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                SCENARIO 3: SLOT KOSONG (RESUME AUTO-MOVE)                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+STEP 1: Pool Test Penuh
+┌───────────────────┐
+│ RUANG TUNGGU 1    │
+│ ─────────────────│
+│ Siswa A: ⏸️ Penuh│ ← Entry: 10:00:00 (paling lama)
+│ Siswa B: ⏸️ Penuh│ ← Entry: 10:00:05
+│ Siswa C: ⏸️ Penuh│ ← Entry: 10:00:10
+└───────────────────┘
+
+┌───────────────────┐
+│ RUANG TUNGGU 2    │
+│ ─────────────────│
+│ Siswa D: ⏸️ Penuh│ ← Entry: 10:00:02
+│ Siswa E: ⏸️ Penuh│ ← Entry: 10:00:08
+└───────────────────┘
+
+                  ┌───────────────────────┐
+                  │   POOL RUANG TEST     │
+                  │   [5/5] ← PENUH       │
+                  │   Siswa 1-5           │
+                  └───────────────────────┘
+
+                              ↓
+                              
+STEP 2: Penguji Claim Siswa 1
+                  ┌───────────────────────┐
+                  │   POOL RUANG TEST     │
+                  │   [4/5] ← Ada slot!   │
+                  │   Siswa 2-5           │
+                  │   [ SLOT KOSONG ]     │
+                  └───────────────────────┘
+
+                              ↓
+                              
+STEP 3: Sistem Detect Slot Kosong & Auto-Move (FIFO)
+
+FIFO Order (by entry time):
+1. Siswa A (10:00:00) ← OLDEST, DIPILIH! ✓
+2. Siswa D (10:00:02)
+3. Siswa B (10:00:05)
+4. Siswa E (10:00:08)
+5. Siswa C (10:00:10)
+
+┌───────────────────┐
+│ RUANG TUNGGU 1    │
+│ ─────────────────│
+│ Siswa A: ✓ Pindah│ ← Auto-move ke Pool Test
+│ Siswa B: ⏸️ Penuh│
+│ Siswa C: ⏸️ Penuh│
+└───────────────────┘
+
+                  ┌───────────────────────┐
+                  │   POOL RUANG TEST     │
+                  │   [5/5] ← Penuh lagi  │
+                  │   Siswa 2-5           │
+                  │   Siswa A (baru)      │
+                  └───────────────────────┘
+
+STATUS: ✅ RESUME - Auto-move berjalan lagi
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                        CAPACITY BADGE COLOR CODING                            ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  HIJAU (0-2 siswa): Banyak slot tersedia                                    │
+│  ┌────────────────────────────────────────────┐                             │
+│  │ 📝 Pool Ruang Test [0/5] ← Hijau          │                             │
+│  │ 📝 Pool Ruang Test [1/5] ← Hijau          │                             │
+│  │ 📝 Pool Ruang Test [2/5] ← Hijau          │                             │
+│  └────────────────────────────────────────────┘                             │
+│                                                                             │
+│  AMBER (3-4 siswa): Hampir penuh                                            │
+│  ┌────────────────────────────────────────────┐                             │
+│  │ 📝 Pool Ruang Test [3/5] ← Amber          │                             │
+│  │ 📝 Pool Ruang Test [4/5] ← Amber          │                             │
+│  └────────────────────────────────────────────┘                             │
+│                                                                             │
+│  MERAH (5 siswa): PENUH!                                                    │
+│  ┌────────────────────────────────────────────┐                             │
+│  │ 📝 Pool Ruang Test [5/5] ← Merah          │                             │
+│  └────────────────────────────────────────────┘                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                      COUNTDOWN BADGE STATES                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  STATE 1: COUNTDOWN NORMAL (Pool belum penuh)                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ #001 👦 Laki-laki 📋 Antrian 1 ⏱️ Auto 10s                         │   │
+│  │ #002 👦 Laki-laki 📋 Antrian 2 ⏱️ Auto 7s                          │   │
+│  │ #003 👧 Perempuan 📋 Antrian 3 ⏱️ Auto 3s                          │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│  Badge: Biru (⏱️ Auto Xs)                                                   │
+│  Behavior: Countdown jalan, auto-move setelah 10 detik                      │
+│                                                                             │
+│  STATE 2: READY TO MOVE (Pool belum penuh, countdown selesai)               │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ #001 👦 Laki-laki 📋 Antrian 1 ✓ Siap Pool                         │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│  Badge: Hijau (✓ Siap Pool)                                                 │
+│  Behavior: Siap auto-move, tunggu check interval (2 detik)                  │
+│                                                                             │
+│  STATE 3: POOL FULL - COUNTDOWN PAUSE (Pool penuh, countdown belum selesai) │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ #004 👦 Laki-laki 📋 Antrian 1 ⏸️ Pool Penuh (7s)                  │   │
+│  │ #005 👧 Perempuan 📋 Antrian 2 ⏸️ Pool Penuh (5s)                  │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│  Badge: Amber (⏸️ Pool Penuh (Xs))                                          │
+│  Behavior: Countdown tetap jalan tapi tidak auto-move                       │
+│                                                                             │
+│  STATE 4: POOL FULL - READY BUT BLOCKED (Pool penuh, countdown selesai)     │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ #006 👦 Laki-laki 📋 Antrian 1 ⏸️ Pool Penuh                       │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│  Badge: Merah (⏸️ Pool Penuh)                                               │
+│  Behavior: Siap move tapi di-block, tunggu slot kosong                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                          MOBILE VIEW STATES                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  POOL BELUM PENUH (3/5):                                                    │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ #001 👦 Laki-laki 📋 Antrian 1                                      │   │
+│  │ Ahmad Rizki                                                         │   │
+│  │ 👨‍👩‍👧 Bapak Rizki                                                      │   │
+│  │ ┌─────────────────────────────────────────────────────────────────┐ │   │
+│  │ │ ⏱️ Auto ke Pool dalam 7s                                        │ │   │
+│  │ │ Pool: 3/5 siswa ← Info capacity                                 │ │   │
+│  │ │ [→ Pindah Sekarang] ← Manual override available                │ │   │
+│  │ └─────────────────────────────────────────────────────────────────┘ │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  POOL PENUH (5/5):                                                          │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ #002 👧 Perempuan 📋 Antrian 2                                      │   │
+│  │ Siti Aminah                                                         │   │
+│  │ 👨‍👩‍👧 Ibu Siti                                                         │   │
+│  │ ┌─────────────────────────────────────────────────────────────────┐ │   │
+│  │ │ ⏸️ Pool Test Penuh (5/5)                                        │ │   │
+│  │ │ Tunggu meja kosong... ← Warning, no button                      │ │   │
+│  │ └─────────────────────────────────────────────────────────────────┘ │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                        MANUAL MOVE PROTECTION                                 ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  SCENARIO: User coba drag siswa ke Pool Test yang sudah penuh              │
+│                                                                             │
+│  STEP 1: User drag siswa dari Tunggu 1                                     │
+│  ┌───────────────────┐                                                     │
+│  │ RUANG TUNGGU 1    │                                                     │
+│  │ Siswa A [dragging]│ ← User drag                                         │
+│  └─────────┬─────────┘                                                     │
+│            │                                                               │
+│            │ 🖱️ Drag ke Pool Test                                         │
+│            ▼                                                               │
+│  ┌───────────────────┐                                                     │
+│  │ POOL RUANG TEST   │                                                     │
+│  │ [5/5] PENUH       │ ← Drop zone                                         │
+│  └───────────────────┘                                                     │
+│                                                                             │
+│  STEP 2: Sistem check capacity                                             │
+│  if (poolTestCount >= 5) {                                                 │
+│    showMessage('Pool Test sudah penuh (5/5)!', 'error');                   │
+│    return; // Block move                                                   │
+│  }                                                                          │
+│                                                                             │
+│  STEP 3: Error message ditampilkan                                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ ❌ Pool Test sudah penuh (5/5)! Tunggu meja kosong terlebih dahulu. │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  RESULT: Siswa tetap di Ruang Tunggu 1 ✓                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                          FIFO LOGIC (UPDATED)                                 ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  FIFO ACROSS BOTH WAITING ROOMS (When slot available)                      │
+│                                                                             │
+│  TUNGGU 1:                          TUNGGU 2:                               │
+│  Siswa A: 10:00:00 (15s) ✓         Siswa D: 10:00:02 (13s) ✓              │
+│  Siswa B: 10:00:05 (10s) ✓         Siswa E: 10:00:08 (7s)  ✗              │
+│  Siswa C: 10:00:10 (5s)  ✗         Siswa F: 10:00:12 (3s)  ✗              │
+│                                                                             │
+│  POOL TEST: 4/5 (1 slot available)                                          │
+│                                                                             │
+│  FIFO ORDER (by entry time, only ready students):                          │
+│  1. Siswa A (10:00:00) ← OLDEST, DIPILIH! ✓                                │
+│  2. Siswa D (10:00:02)                                                      │
+│  3. Siswa B (10:00:05)                                                      │
+│                                                                             │
+│  RESULT: Siswa A auto-move ke Pool Test                                    │
+│  POOL TEST: 5/5 (penuh lagi)                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                            TIMING DIAGRAM                                     ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+TIME: 10:00:00 - Siswa A masuk Tunggu 1
+      ↓
+      ⏱️ Countdown: 10s → 9s → 8s → ... → 1s → 0s
+      ↓
+TIME: 10:00:10 - Countdown selesai
+      ↓
+      Check Pool Test capacity
+      ├─ If Pool < 5: ✓ Auto-move immediately
+      └─ If Pool = 5: ⏸️ Pause, tunggu slot kosong
+      
+TIME: 10:00:12 - Penguji claim siswa dari Pool Test
+      ↓
+      Pool Test: 5/5 → 4/5 (slot kosong!)
+      ↓
+TIME: 10:00:14 - Sistem check (every 2 seconds)
+      ↓
+      Detect slot kosong
+      ↓
+      Auto-move siswa paling lama (FIFO)
+      ↓
+      Pool Test: 4/5 → 5/5 (penuh lagi)
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                              SUMMARY                                          ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│  POOL TEST CAPACITY: MAX 5 SISWA                                            │
+│                                                                             │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                             │
+│  FEATURES:                                                                  │
+│  ✅ Capacity limit: Max 5 siswa (sesuai jumlah meja)                       │
+│  ✅ Auto-move pause: Jika Pool penuh                                       │
+│  ✅ Visual indicator: Capacity badge dengan color coding                    │
+│  ✅ Countdown pause: Badge "⏸️ Pool Penuh" jika Pool penuh                 │
+│  ✅ Manual move protection: Block jika Pool penuh                          │
+│  ✅ FIFO across rooms: Siswa paling lama dapat prioritas                   │
+│  ✅ Auto-resume: Begitu ada slot, auto-move resume                         │
+│                                                                             │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                             │
+│  BENEFITS:                                                                  │
+│  ✅ Efisien - Pool Test tidak overcrowded                                  │
+│  ✅ Terorganisir - Hanya 5 siswa di Pool Test                              │
+│  ✅ Transparan - User tahu status Pool Test                                │
+│  ✅ Fair - FIFO tetap terjaga                                              │
+│  ✅ Optimal - Alur siswa smooth                                            │
+│                                                                             │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                                             │
+│  🎉 SISTEM SIAP DIGUNAKAN! 🎉                                               │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
