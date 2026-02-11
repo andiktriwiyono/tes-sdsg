@@ -530,7 +530,7 @@ function createStudentCard(student) {
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 mb-1 flex-wrap">
           <span class="text-xs font-mono bg-slate-200 text-slate-600 px-2 py-0.5 rounded">#${student.no_pendaftaran}</span>
-          <span class="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">Sesi ${student.sesi || 1}</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">Sesi ${(student.sesi || 'sesi1').replace('sesi', '')}</span>
           <span class="text-xs px-2 py-0.5 rounded ${genderColor}">${genderIcon} ${student.jenis_kelamin}</span>
           <span class="text-xs px-2 py-0.5 rounded ${statusColors[student.lokasi] || statusColors['daftar']}">${statusLabels[student.lokasi] || 'Terdaftar'}</span>
           ${queueBadge}

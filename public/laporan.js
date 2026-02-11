@@ -39,8 +39,9 @@ function applyFilters() {
   const statusFilter = document.getElementById('filter-status').value;
   
   filteredData = studentsData.filter(student => {
-    // Sesi filter
-    if (sesiFilter !== 'all' && student.sesi != sesiFilter) return false;
+    // Sesi filter - normalize sesi value (remove 'sesi' prefix)
+    const studentSesiNumber = (student.sesi || 'sesi1').replace('sesi', '');
+    if (sesiFilter !== 'all' && studentSesiNumber != sesiFilter) return false;
     
     // Gender filter
     if (genderFilter !== 'all' && student.jenis_kelamin !== genderFilter) return false;
@@ -101,7 +102,10 @@ function generateSesiReport() {
   ];
   
   container.innerHTML = sesiData.map(({ sesi, range }) => {
-    const sesiStudents = filteredData.filter(s => s.sesi == sesi);
+    const sesiStudents = filteredData.filter(s => {
+      const studentSesiNumber = (s.sesi || 'sesi1').replace('sesi', '');
+      return studentSesiNumber == sesi;
+    });
     const completed = sesiStudents.filter(s => s.sudah_test === 1).length;
     const notCompleted = sesiStudents.length - completed;
     const percentage = sesiStudents.length > 0 
@@ -266,7 +270,7 @@ function generateStudentsDetail() {
         <td class="px-4 py-3 text-sm text-slate-600">${i + 1}</td>
         <td class="px-4 py-3 text-sm font-mono text-slate-800">${s.no_pendaftaran}</td>
         <td class="px-4 py-3 text-sm text-slate-800">${s.nama_murid}</td>
-        <td class="px-4 py-3 text-sm text-slate-600">Sesi ${s.sesi || 1}</td>
+        <td class="px-4 py-3 text-sm text-slate-600">Sesi ${(s.sesi || 'sesi1').replace('sesi', '')}</td>
         <td class="px-4 py-3 text-sm">${genderIcon} ${s.jenis_kelamin}</td>
         <td class="px-4 py-3">${statusBadge}</td>
         <td class="px-4 py-3 text-sm text-slate-800">${mejaText}</td>
