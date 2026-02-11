@@ -69,6 +69,13 @@ function applyFilters() {
   console.log('Filters:', { sesiFilter, genderFilter, statusFilter });
   console.log('Total students before filter:', studentsData.length);
   
+  // If all filters are "all", just show all data
+  if (sesiFilter === 'all' && genderFilter === 'all' && statusFilter === 'all') {
+    filteredData = [...studentsData];
+    console.log('All filters set to "all" - showing all students:', filteredData.length);
+    return;
+  }
+  
   filteredData = studentsData.filter(student => {
     let passedSesi = true;
     let passedGender = true;
@@ -338,6 +345,23 @@ function generateDurationReport() {
 function generateStudentsDetail() {
   const tbody = document.getElementById('students-detail');
   
+  if (filteredData.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="px-4 py-8 text-center text-slate-500">
+          <div class="flex flex-col items-center gap-2">
+            <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+            </svg>
+            <p class="font-semibold">Tidak ada data siswa yang sesuai dengan filter</p>
+            <p class="text-sm">Coba ubah filter atau pilih "Semua" untuk melihat semua data</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
   tbody.innerHTML = filteredData.map((s, i) => {
     const statusBadge = s.sudah_test === 1
       ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">✓ Sudah</span>'
@@ -521,6 +545,22 @@ function exportToExcel() {
 
 // Event listeners
 document.getElementById('apply-filter-btn').addEventListener('click', () => {
+  applyFilters();
+  generateReports();
+});
+
+// Auto-apply filter when dropdown changes (no need to click button)
+document.getElementById('filter-sesi').addEventListener('change', () => {
+  applyFilters();
+  generateReports();
+});
+
+document.getElementById('filter-gender').addEventListener('change', () => {
+  applyFilters();
+  generateReports();
+});
+
+document.getElementById('filter-status').addEventListener('change', () => {
   applyFilters();
   generateReports();
 });
