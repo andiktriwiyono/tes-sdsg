@@ -949,6 +949,24 @@ function setupDropZones() {
         const fromLocation = draggedElement.getAttribute('data-from-location');
         
         if (student && student.lokasi !== newLocation) {
+          // Check Ruang Tunggu 1 capacity before moving
+          if (newLocation === 'tunggu1') {
+            const tunggu1Count = studentsData.filter(s => s.lokasi === 'tunggu1').length;
+            if (tunggu1Count >= RUANG_TUNGGU_CAPACITY) {
+              showMessage(`Ruang Tunggu 1 sudah penuh (${tunggu1Count}/${RUANG_TUNGGU_CAPACITY})! Tidak bisa menambah siswa.`, 'error');
+              return;
+            }
+          }
+          
+          // Check Ruang Tunggu 2 capacity before moving
+          if (newLocation === 'tunggu2') {
+            const tunggu2Count = studentsData.filter(s => s.lokasi === 'tunggu2').length;
+            if (tunggu2Count >= RUANG_TUNGGU_CAPACITY) {
+              showMessage(`Ruang Tunggu 2 sudah penuh (${tunggu2Count}/${RUANG_TUNGGU_CAPACITY})! Tidak bisa menambah siswa.`, 'error');
+              return;
+            }
+          }
+          
           // Check Pool Test capacity before moving
           if (newLocation === 'test') {
             const poolTestCount = studentsData.filter(s => s.lokasi === 'test').length;
@@ -1161,6 +1179,24 @@ async function moveStudent(studentId, targetLocation) {
     const student = studentsData.find(s => s.id == studentId);
     if (!student) return;
     
+    // Check Ruang Tunggu 1 capacity before moving
+    if (targetLocation === 'tunggu1') {
+      const tunggu1Count = studentsData.filter(s => s.lokasi === 'tunggu1').length;
+      if (tunggu1Count >= RUANG_TUNGGU_CAPACITY) {
+        showMessage(`Ruang Tunggu 1 sudah penuh (${tunggu1Count}/${RUANG_TUNGGU_CAPACITY})! Tidak bisa menambah siswa.`, 'error');
+        return;
+      }
+    }
+    
+    // Check Ruang Tunggu 2 capacity before moving
+    if (targetLocation === 'tunggu2') {
+      const tunggu2Count = studentsData.filter(s => s.lokasi === 'tunggu2').length;
+      if (tunggu2Count >= RUANG_TUNGGU_CAPACITY) {
+        showMessage(`Ruang Tunggu 2 sudah penuh (${tunggu2Count}/${RUANG_TUNGGU_CAPACITY})! Tidak bisa menambah siswa.`, 'error');
+        return;
+      }
+    }
+    
     // Check Pool Test capacity before moving
     if (targetLocation === 'test') {
       const poolTestCount = studentsData.filter(s => s.lokasi === 'test').length;
@@ -1214,6 +1250,7 @@ function calculateDuration(startTime) {
 // Auto-move configuration
 const AUTO_MOVE_DELAY = 10; // seconds - students auto-move to Pool Test after this delay
 const POOL_TEST_CAPACITY = 5; // maximum students in Pool Test (same as number of tables)
+const RUANG_TUNGGU_CAPACITY = 18; // maximum students in each Ruang Tunggu (1 and 2)
 
 // Check and auto-move students from Tunggu 1/2 to Pool Test
 async function checkAutoMove() {
@@ -1568,6 +1605,34 @@ function updateStatistics() {
       poolCapacityEl.classList.add('bg-amber-500');
     } else {
       poolCapacityEl.classList.add('bg-red-500');
+    }
+  }
+  
+  // Update Ruang Tunggu 1 capacity display
+  const tunggu1CapacityEl = document.getElementById('tunggu1-capacity');
+  if (tunggu1CapacityEl) {
+    tunggu1CapacityEl.textContent = `(${counts.tunggu1}/18)`;
+    // Change color based on capacity
+    if (counts.tunggu1 >= 18) {
+      tunggu1CapacityEl.classList.add('text-red-200', 'font-bold');
+    } else if (counts.tunggu1 >= 15) {
+      tunggu1CapacityEl.classList.add('text-amber-200');
+    } else {
+      tunggu1CapacityEl.classList.remove('text-red-200', 'text-amber-200', 'font-bold');
+    }
+  }
+  
+  // Update Ruang Tunggu 2 capacity display
+  const tunggu2CapacityEl = document.getElementById('tunggu2-capacity');
+  if (tunggu2CapacityEl) {
+    tunggu2CapacityEl.textContent = `(${counts.tunggu2}/18)`;
+    // Change color based on capacity
+    if (counts.tunggu2 >= 18) {
+      tunggu2CapacityEl.classList.add('text-red-200', 'font-bold');
+    } else if (counts.tunggu2 >= 15) {
+      tunggu2CapacityEl.classList.add('text-amber-200');
+    } else {
+      tunggu2CapacityEl.classList.remove('text-red-200', 'text-amber-200', 'font-bold');
     }
   }
 }
