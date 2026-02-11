@@ -55,7 +55,8 @@ exports.handler = async (event) => {
         teacher_name: row[2],
         position: row[3],
         created_at: row[4],
-        updated_at: row[5]
+        updated_at: row[5],
+        is_break: row[6] || 0
       }));
 
       return {
@@ -65,21 +66,54 @@ exports.handler = async (event) => {
       };
     }
 
-    // PUT - Update teacher
+    // PUT - Update teacher or toggle break
     if (event.httpMethod === 'PUT') {
-      const { id, teacher_name } = JSON.parse(event.body);
+      const body = JSON.parse(event.body);
       const now = new Date().toISOString();
 
-      database.run(
-        'UPDATE teachers SET teacher_name = ?, updated_at = ? WHERE id = ?',
-        [teacher_name, now, id]
-      );
-      saveDb(database);
+      // Toggle break status for a meja
+      if (body.action === 'toggle_break' && body.meja_number) {
+        const { meja_number, is_break } = body;
+        
+        // Update all teachers at this meja
+        database.run(
+          'UPDATE teachers SET is_break = ?, updated_at = ? WHERE meja_number = ?',
+          [is_break ? 1 : 0, now, meja_number]
+        );
+        saveDb(database);
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ 
+            message: 'Break status updated successfully',
+            meja_number,
+            is_break: is_break ? 1 : 0
+          })
+        };
+      }
+
+      // Update teacher name
+      if (body.id && body.teacher_name) {
+        const { id, teacher_name } = body;
+        
+        database.run(
+          'UPDATE teachers SET teacher_name = ?, updated_at = ? WHERE id = ?',
+          [teacher_name, now, id]
+        );
+        saveDb(database);
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ message: 'Teacher updated successfully' })
+        };
+      }
 
       return {
-        statusCode: 200,
+        statusCode: 400,
         headers,
-        body: JSON.stringify({ message: 'Teacher updated successfully' })
+        body: JSON.stringify({ error: 'Invalid request body' })
       };
     }
 
