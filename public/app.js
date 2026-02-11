@@ -1122,8 +1122,10 @@ function renderAllRooms() {
       if (emptyMsg) {
         emptyMsg.style.display = 'block';
         // Update message for search results
-        if (location === 'daftar' && isSearchActive) {
+        if (location === 'daftar' && isSearchDaftarActive) {
           emptyMsg.textContent = 'Tidak ada siswa yang cocok dengan pencarian';
+        } else if (location === 'daftar' && currentSessionFilter !== 'all') {
+          emptyMsg.textContent = `Tidak ada siswa di Sesi ${currentSessionFilter}`;
         } else {
           const messages = {
             'daftar': 'Belum ada siswa terdaftar',
@@ -1442,6 +1444,21 @@ const sessionFilterSelect = document.getElementById('session-filter');
 if (sessionFilterSelect) {
   sessionFilterSelect.addEventListener('change', (e) => {
     currentSessionFilter = e.target.value;
+    console.log('🔍 Filter sesi dipilih:', currentSessionFilter);
+    
+    // Debug: show how many students match
+    const matchingStudents = studentsData.filter(s => {
+      if (s.lokasi !== 'daftar') return false;
+      const studentSesiNumber = (s.sesi || 'sesi1').replace('sesi', '');
+      return currentSessionFilter === 'all' || studentSesiNumber === currentSessionFilter;
+    });
+    console.log('📊 Siswa yang cocok:', matchingStudents.length);
+    console.log('📋 Sample data:', matchingStudents.slice(0, 3).map(s => ({
+      nama: s.nama_murid,
+      sesi: s.sesi,
+      sesiNumber: (s.sesi || 'sesi1').replace('sesi', '')
+    })));
+    
     renderAllRooms();
     updateStatistics();
   });
