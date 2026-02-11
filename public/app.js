@@ -1046,8 +1046,9 @@ function renderAllRooms() {
     if (grouped[loc]) {
       // For 'daftar', apply session filter AND search filter
       if (loc === 'daftar') {
-        // Check session filter
-        const sessionMatch = currentSessionFilter === 'all' || student.sesi === parseInt(currentSessionFilter);
+        // Check session filter - normalize sesi value for comparison
+        const studentSesiNumber = (student.sesi || 'sesi1').replace('sesi', '');
+        const sessionMatch = currentSessionFilter === 'all' || studentSesiNumber === currentSessionFilter;
         
         if (sessionMatch) {
           // Then check search filter
@@ -1164,15 +1165,40 @@ function updateStatistics() {
 
   studentsData.forEach(student => {
     const loc = student.lokasi || 'daftar';
-    if (counts[loc] !== undefined) {
-      counts[loc]++;
+    
+    // For 'daftar', apply session filter
+    if (loc === 'daftar') {
+      const studentSesiNumber = (student.sesi || 'sesi1').replace('sesi', '');
+      const sessionMatch = currentSessionFilter === 'all' || studentSesiNumber === currentSessionFilter;
+      
+      if (sessionMatch && counts[loc] !== undefined) {
+        counts[loc]++;
+      }
+    } else {
+      // For other locations, count normally
+      if (counts[loc] !== undefined) {
+        counts[loc]++;
+      }
     }
 
-    // Count by gender
-    if (student.jenis_kelamin === 'Laki-laki') {
-      totalLaki++;
-    } else if (student.jenis_kelamin === 'Perempuan') {
-      totalPerempuan++;
+    // Count by gender (only for filtered daftar or all other locations)
+    if (loc === 'daftar') {
+      const studentSesiNumber = (student.sesi || 'sesi1').replace('sesi', '');
+      const sessionMatch = currentSessionFilter === 'all' || studentSesiNumber === currentSessionFilter;
+      
+      if (sessionMatch) {
+        if (student.jenis_kelamin === 'Laki-laki') {
+          totalLaki++;
+        } else if (student.jenis_kelamin === 'Perempuan') {
+          totalPerempuan++;
+        }
+      }
+    } else {
+      if (student.jenis_kelamin === 'Laki-laki') {
+        totalLaki++;
+      } else if (student.jenis_kelamin === 'Perempuan') {
+        totalPerempuan++;
+      }
     }
   });
 
