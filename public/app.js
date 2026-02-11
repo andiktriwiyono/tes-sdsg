@@ -471,6 +471,13 @@ function createStudentCard(student) {
     queueBadge = `<span class="text-xs px-2 py-0.5 rounded ${queueColor} font-bold">${queueIcon} Antrian ${queuePosition}</span>`;
   }
   
+  // Badge for students waiting to be picked up (sudah di-ploting oleh koordinator)
+  let waitingPickupBadge = '';
+  if (isInTestPool && student.menunggu_dijemput === 1 && student.target_meja) {
+    const mejaNum = student.target_meja.replace('meja-', '');
+    waitingPickupBadge = `<span class="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-bold animate-pulse">🚶 Menunggu Dijemput → M${mejaNum}</span>`;
+  }
+  
   const buttonIcon = isInDaftar ? '✕' : '↩';
   const buttonTitle = isInDaftar ? 'Hapus siswa (klik 2x)' : 'Kembalikan ke Daftar Siswa';
   const buttonColor = isInDaftar ? 'hover:text-red-500 hover:bg-red-50' : 'hover:text-emerald-500 hover:bg-emerald-50';
@@ -629,6 +636,159 @@ function createStudentCard(student) {
     }
   }
   
+  // Show "Jemput & Antar" buttons for PETUGAS_ANTAR when student is in test pool
+  let escortButtons = '';
+  if (isInTestPool && currentUser && currentUser.role === 'PETUGAS_ANTAR') {
+    // Check if student is already plotted by coordinator
+    if (student.menunggu_dijemput === 1 && student.target_meja) {
+      // Student already plotted - show single button to escort to assigned table
+      const mejaNum = student.target_meja.replace('meja-', '');
+      
+      // Check if target table is occupied
+      const targetOccupied = studentsData.some(s => s.lokasi === student.target_meja);
+      
+      // Check if target table is on break
+      const targetBreak = teachersData.some(t => t.meja_number === parseInt(mejaNum) && t.is_break === 1);
+      
+      if (targetOccupied) {
+        escortButtons = `
+          <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+            <p class="text-xs text-red-700 font-semibold">⚠️ Meja ${mejaNum} Terisi!</p>
+            <p class="text-xs text-red-600 mt-1">Tunggu meja kosong atau hubungi koordinator</p>
+          </div>
+        `;
+      } else if (targetBreak) {
+        escortButtons = `
+          <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded">
+            <p class="text-xs text-amber-700 font-semibold">🛑 Meja ${mejaNum} Istirahat!</p>
+            <p class="text-xs text-amber-600 mt-1">Hubungi koordinator untuk ganti meja</p>
+          </div>
+        `;
+      } else {
+        escortButtons = `
+          <div class="mt-2 p-2 bg-cyan-50 border border-cyan-200 rounded">
+            <p class="text-xs text-cyan-700 font-semibold mb-1">🚶 JEMPUT & ANTAR!</p>
+            <p class="text-xs text-cyan-600 mb-2">Sudah di-ploting ke Meja ${mejaNum}</p>
+            <button class="escort-btn w-full bg-cyan-500 hover:bg-cyan-600 text-white text-xs py-1.5 px-2 rounded transition-colors font-medium" data-id="${student.id}" data-table="${mejaNum}">✓ Jemput & Antar ke M${mejaNum}</button>
+          </div>
+        `;
+      }
+    } else {
+      // Student not yet plotted - show all available tables
+      // Get queue position
+      const poolStudents = studentsData
+        .filter(s => s.lokasi === 'test')
+        .sort((a, b) => {
+          const timeA = a.pool_entry_time ? new Date(a.pool_entry_time).getTime() : 0;
+          const timeB = b.pool_entry_time ? new Date(b.pool_entry_time).getTime() : 0;
+          return timeA - timeB;
+        });
+      
+      const queuePosition = poolStudents.findIndex(s => s.id === student.id) + 1;
+      const isInTop5 = queuePosition <= 5; // Top 5 siswa bisa dijemput
+      
+      if (isInTop5) {
+        // Check which tables are occupied
+        const table1Occupied = studentsData.some(s => s.lokasi === 'meja-1');
+        const table2Occupied = studentsData.some(s => s.lokasi === 'meja-2');
+        const table3Occupied = studentsData.some(s => s.lokasi === 'meja-3');
+        const table4Occupied = studentsData.some(s => s.lokasi === 'meja-4');
+        const table5Occupied = studentsData.some(s => s.lokasi === 'meja-5');
+        
+        // Check which tables are on break
+        const table1Break = teachersData.some(t => t.meja_number === 1 && t.is_break === 1);
+        const table2Break = teachersData.some(t => t.meja_number === 2 && t.is_break === 1);
+        const table3Break = teachersData.some(t => t.meja_number === 3 && t.is_break === 1);
+        const table4Break = teachersData.some(t => t.meja_number === 4 && t.is_break === 1);
+        const table5Break = teachersData.some(t => t.meja_number === 5 && t.is_break === 1);
+        
+        // Count available tables (not occupied AND not on break)
+        const availableTables = [
+          !table1Occupied && !table1Break,
+          !table2Occupied && !table2Break,
+          !table3Occupied && !table3Break,
+          !table4Occupied && !table4Break,
+          !table5Occupied && !table5Break
+        ].filter(Boolean).length;
+        
+        // Generate buttons (disabled if table occupied OR on break)
+        const btn1 = table1Occupied 
+          ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 1 terisi">M1</button>`
+          : table1Break
+          ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 1 istirahat">🛑</button>`
+          : `<button class="escort-btn bg-cyan-500 hover:bg-cyan-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="1">M1</button>`;
+        
+        const btn2 = table2Occupied 
+          ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 2 terisi">M2</button>`
+          : table2Break
+          ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 2 istirahat">🛑</button>`
+          : `<button class="escort-btn bg-cyan-500 hover:bg-cyan-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="2">M2</button>`;
+        
+        const btn3 = table3Occupied 
+          ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 3 terisi">M3</button>`
+          : table3Break
+          ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 3 istirahat">🛑</button>`
+          : `<button class="escort-btn bg-cyan-500 hover:bg-cyan-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="3">M3</button>`;
+        
+        const btn4 = table4Occupied 
+          ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 4 terisi">M4</button>`
+          : table4Break
+          ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 4 istirahat">🛑</button>`
+          : `<button class="escort-btn bg-cyan-500 hover:bg-cyan-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="4">M4</button>`;
+        
+        const btn5 = table5Occupied 
+          ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 5 terisi">M5</button>`
+          : table5Break
+          ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 5 istirahat">🛑</button>`
+          : `<button class="escort-btn bg-cyan-500 hover:bg-cyan-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="5">M5</button>`;
+        
+        if (availableTables > 0) {
+          // Show buttons for all 5 tables (disabled if occupied or on break)
+          escortButtons = `
+            <div class="mt-2 p-2 bg-cyan-50 border border-cyan-200 rounded">
+              <p class="text-xs text-cyan-700 font-semibold mb-1">🚶 JEMPUT & ANTAR SISWA!</p>
+              <p class="text-xs text-cyan-600 mb-2">Antrian ${queuePosition} - Pilih meja tujuan (${availableTables}/5):</p>
+              <div class="grid grid-cols-5 gap-1">
+                ${btn1}
+                ${btn2}
+                ${btn3}
+                ${btn4}
+                ${btn5}
+              </div>
+            </div>
+          `;
+        } else {
+          // All tables occupied or on break
+          const breakCount = [table1Break, table2Break, table3Break, table4Break, table5Break].filter(Boolean).length;
+          const occupiedCount = [table1Occupied, table2Occupied, table3Occupied, table4Occupied, table5Occupied].filter(Boolean).length;
+          
+          let statusMessage = '';
+          if (breakCount > 0 && occupiedCount > 0) {
+            statusMessage = `${occupiedCount} meja terisi, ${breakCount} meja istirahat`;
+          } else if (breakCount > 0) {
+            statusMessage = `${breakCount} meja sedang istirahat`;
+          } else {
+            statusMessage = 'Semua meja terisi';
+          }
+          
+          escortButtons = `
+            <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+              <p class="text-xs text-red-700 font-semibold">⏸️ Tidak Ada Meja Tersedia</p>
+              <p class="text-xs text-red-600 mt-1">${statusMessage}</p>
+            </div>
+          `;
+        }
+      } else {
+        escortButtons = `
+          <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded">
+            <p class="text-xs text-amber-700 font-semibold">⏳ Antrian ke-${queuePosition}</p>
+            <p class="text-xs text-amber-600 mt-1">Tunggu 5 siswa pertama dijemput dulu</p>
+          </div>
+        `;
+      }
+    }
+  }
+  
   // Show "Antar Kembali" button for PETUGAS_ANTAR when student finished test
   let returnButton = '';
   if (isAtTable && student.sudah_test === 1 && currentUser && currentUser.role === 'PETUGAS_ANTAR') {
@@ -663,6 +823,7 @@ function createStudentCard(student) {
           <span class="text-xs px-2 py-0.5 rounded ${genderColor}">${genderIcon} ${student.jenis_kelamin}</span>
           <span class="text-xs px-2 py-0.5 rounded ${statusColors[student.lokasi] || statusColors['daftar']}">${statusLabels[student.lokasi] || 'Terdaftar'}</span>
           ${queueBadge}
+          ${waitingPickupBadge}
           ${testBadge}
           ${timerBadge}
           ${autoMoveBadge}
@@ -671,6 +832,7 @@ function createStudentCard(student) {
         <p class="text-xs text-slate-500 truncate">👨‍👩‍👧 ${student.nama_orang_tua || '-'}</p>
         ${mobileButtons}
         ${claimButtons}
+        ${escortButtons}
         ${completeButton}
         ${returnButton}
       </div>
@@ -702,6 +864,16 @@ function createStudentCard(student) {
       e.stopPropagation();
       const tableNum = btn.getAttribute('data-table');
       plotingStudent(student, tableNum);
+    });
+  });
+
+  // Add event listener for escort button (Petugas Antar - Jemput & Antar)
+  const escortBtns = card.querySelectorAll('.escort-btn');
+  escortBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const tableNum = btn.getAttribute('data-table');
+      escortStudent(student, tableNum);
     });
   });
 
@@ -897,7 +1069,44 @@ async function plotingStudent(student, tableNum) {
       return;
     }
     
-    // Koordinator: Ploting siswa LANGSUNG ke meja (tidak perlu menunggu petugas antar)
+    // Koordinator: Ploting siswa - TANDAI untuk dijemput oleh Petugas Antar
+    await fetch(API_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        id: student.id,
+        menunggu_dijemput: 1,
+        target_meja: `meja-${tableNum}`
+        // Siswa tetap di lokasi 'test' (pool test)
+      })
+    });
+    
+    showMessage(`${student.nama_murid} telah di-ploting ke Meja ${tableNum}. Menunggu Petugas Antar untuk menjemput.`, 'success');
+    await loadStudents();
+  } catch (error) {
+    showMessage('Gagal ploting siswa', 'error');
+  }
+}
+
+async function escortStudent(student, tableNum) {
+  try {
+    // Check if table already has a student
+    const tableStudents = studentsData.filter(s => s.lokasi === `meja-${tableNum}`);
+    if (tableStudents.length >= 1) {
+      showMessage(`Meja ${tableNum} sudah terisi! Selesaikan test siswa saat ini terlebih dahulu.`, 'error');
+      return;
+    }
+    
+    // Check if table is on break
+    const tableTeachers = teachersData.filter(t => t.meja_number === parseInt(tableNum));
+    const isOnBreak = tableTeachers.some(t => t.is_break === 1);
+    
+    if (isOnBreak) {
+      showMessage(`Meja ${tableNum} sedang istirahat! Pilih meja lain yang aktif.`, 'error');
+      return;
+    }
+    
+    // Petugas Antar: Jemput siswa dari Pool dan antar ke Meja
     await fetch(API_URL, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -911,29 +1120,7 @@ async function plotingStudent(student, tableNum) {
       })
     });
     
-    showMessage(`${student.nama_murid} berhasil di-ploting ke Meja ${tableNum} dan langsung mulai test!`, 'success');
-    await loadStudents();
-  } catch (error) {
-    showMessage('Gagal ploting siswa', 'error');
-  }
-}
-
-async function escortStudent(student, tableNum) {
-  try {
-    // Petugas Antar: Jemput siswa dari Pool dan antar ke Meja
-    await fetch(API_URL, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        id: student.id,
-        lokasi: `meja-${tableNum}`,
-        menunggu_dijemput: 0,
-        target_meja: null,
-        test_start_time: new Date().toISOString()
-      })
-    });
-    
-    showMessage(`${student.nama_murid} berhasil diantar ke Meja ${tableNum}`, 'success');
+    showMessage(`${student.nama_murid} berhasil dijemput dan diantar ke Meja ${tableNum}`, 'success');
     await loadStudents();
   } catch (error) {
     showMessage('Gagal mengantar siswa', 'error');
