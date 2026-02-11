@@ -987,6 +987,12 @@ async function completeTest(student) {
 
 async function plotingStudent(student, tableNum) {
   try {
+    // ONLY Koordinator can plot students
+    if (!currentUser || currentUser.role !== 'KOORDINATOR_RUANG_TEST') {
+      showMessage('Hanya Koordinator yang bisa plot siswa ke meja!', 'error');
+      return;
+    }
+    
     // Check if table already has a student
     const tableStudents = studentsData.filter(s => s.lokasi === `meja-${tableNum}`);
     if (tableStudents.length >= 1) {
@@ -1024,6 +1030,12 @@ async function plotingStudent(student, tableNum) {
 
 async function escortStudent(student, tableNum) {
   try {
+    // ONLY Petugas Antar can escort students
+    if (!currentUser || currentUser.role !== 'PETUGAS_ANTAR') {
+      showMessage('Hanya Petugas Antar yang bisa jemput dan antar siswa!', 'error');
+      return;
+    }
+    
     // Check if table already has a student
     const tableStudents = studentsData.filter(s => s.lokasi === `meja-${tableNum}`);
     if (tableStudents.length >= 1) {
@@ -1063,6 +1075,12 @@ async function escortStudent(student, tableNum) {
 
 async function returnStudent(student) {
   try {
+    // ONLY Petugas Antar can return students
+    if (!currentUser || currentUser.role !== 'PETUGAS_ANTAR') {
+      showMessage('Hanya Petugas Antar yang bisa antar kembali siswa!', 'error');
+      return;
+    }
+    
     // Determine where to return the student based on their origin
     const lokasiAsal = student.lokasi_asal || 'tunggu1';
     const returnLocation = lokasiAsal === 'tunggu1' ? 'selesai-tunggu1' : 'selesai-tunggu2';
