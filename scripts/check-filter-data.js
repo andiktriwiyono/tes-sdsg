@@ -52,13 +52,13 @@ async function checkData() {
   const sampleResult = db.exec(`
     SELECT no_pendaftaran, nama_murid, sesi, jenis_kelamin, sudah_test 
     FROM students 
-    WHERE sesi = 'sesi1' AND jenis_kelamin = 'Laki-laki' AND sudah_test = 0
-    LIMIT 5
+    WHERE sesi = 1 AND jenis_kelamin = 'Laki-laki' AND sudah_test = 0
+    LIMIT 10
   `);
   if (sampleResult.length > 0 && sampleResult[0].values.length > 0) {
     console.log('Found students:');
     sampleResult[0].values.forEach(row => {
-      console.log(`  - ${row[0]}: ${row[1]} | Sesi: ${row[2]} | Gender: ${row[3]} | Test: ${row[4]}`);
+      console.log(`  - ${row[0]}: ${row[1]} | Sesi: ${row[2]} | Gender: "${row[3]}" | Test: ${row[4]}`);
     });
   } else {
     console.log('NO STUDENTS FOUND with this combination!');
@@ -66,26 +66,32 @@ async function checkData() {
     // Try alternative queries to find the issue
     console.log('\nTrying alternative queries...');
     
-    // Check with sesi = '1' instead of 'sesi1'
+    // Check with sesi = 1 (number)
     const alt1 = db.exec(`
       SELECT COUNT(*) FROM students 
-      WHERE sesi = '1' AND jenis_kelamin = 'Laki-laki' AND sudah_test = 0
+      WHERE sesi = 1 AND jenis_kelamin = 'Laki-laki' AND sudah_test = 0
     `);
-    console.log(`Sesi='1' (not 'sesi1'): ${alt1[0].values[0][0]} students`);
+    console.log(`Sesi=1 (number): ${alt1[0].values[0][0]} students`);
     
-    // Check with sudah_test != 1 instead of = 0
+    // Check just sesi and gender
     const alt2 = db.exec(`
       SELECT COUNT(*) FROM students 
-      WHERE sesi = 'sesi1' AND jenis_kelamin = 'Laki-laki' AND sudah_test != 1
+      WHERE sesi = 1 AND jenis_kelamin = 'Laki-laki'
     `);
-    console.log(`sudah_test != 1 (not = 0): ${alt2[0].values[0][0]} students`);
+    console.log(`Sesi=1 + Gender (no status filter): ${alt2[0].values[0][0]} students`);
     
-    // Check with sudah_test IS NULL
+    // Check for any non-zero sudah_test
     const alt3 = db.exec(`
-      SELECT COUNT(*) FROM students 
-      WHERE sesi = 'sesi1' AND jenis_kelamin = 'Laki-laki' AND (sudah_test = 0 OR sudah_test IS NULL)
+      SELECT sudah_test, COUNT(*) FROM students 
+      WHERE sesi = 1 AND jenis_kelamin = 'Laki-laki'
+      GROUP BY sudah_test
     `);
-    console.log(`sudah_test = 0 OR NULL: ${alt3[0].values[0][0]} students`);
+    console.log('Status breakdown for Sesi 1 + Laki-laki:');
+    if (alt3.length > 0) {
+      alt3[0].values.forEach(row => {
+        console.log(`  sudah_test=${row[0]}: ${row[1]} students`);
+      });
+    }
   }
   console.log('');
 

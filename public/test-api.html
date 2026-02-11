@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test API Response</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+    .section { margin: 20px 0; border: 1px solid #ccc; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Test API Response</h1>
+  
+  <div class="section">
+    <h2>API Response Sample (First 5 students)</h2>
+    <pre id="api-response"></pre>
+  </div>
+  
+  <div class="section">
+    <h2>Filter Test: Sesi 1 + Laki-laki + Belum Test</h2>
+    <pre id="filter-result"></pre>
+  </div>
+  
+  <div class="section">
+    <h2>Data Type Check</h2>
+    <pre id="type-check"></pre>
+  </div>
+
+  <script>
+    async function testAPI() {
+      try {
+        const response = await fetch('/api/students');
+        const students = await response.json();
+        
+        // Show sample data
+        document.getElementById('api-response').textContent = 
+          JSON.stringify(students.slice(0, 5), null, 2);
+        
+        // Test filter
+        const filtered = students.filter(s => {
+          const sesiMatch = String(s.sesi) === '1';
+          const genderMatch = s.jenis_kelamin === 'Laki-laki';
+          const statusMatch = s.sudah_test !== 1;
+          
+          return sesiMatch && genderMatch && statusMatch;
+        });
+        
+        document.getElementById('filter-result').textContent = 
+          `Found ${filtered.length} students\n\n` +
+          JSON.stringify(filtered.slice(0, 5), null, 2);
+        
+        // Check data types
+        const sample = students[0];
+        const typeInfo = {
+          sesi: {
+            value: sample.sesi,
+            type: typeof sample.sesi
+          },
+          jenis_kelamin: {
+            value: sample.jenis_kelamin,
+            type: typeof sample.jenis_kelamin
+          },
+          sudah_test: {
+            value: sample.sudah_test,
+            type: typeof sample.sudah_test
+          }
+        };
+        
+        document.getElementById('type-check').textContent = 
+          JSON.stringify(typeInfo, null, 2);
+        
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('api-response').textContent = 'Error: ' + error.message;
+      }
+    }
+    
+    testAPI();
+  </script>
+</body>
+</html>
