@@ -659,7 +659,7 @@ function createStudentCard(student) {
   // Show "Jemput & Antar" buttons for PETUGAS_ANTAR when student is in test pool
   let escortButtons = '';
   if (isInTestPool && currentUser && currentUser.role === 'PETUGAS_ANTAR') {
-    // Check if student is already plotted by coordinator
+    // PETUGAS_ANTAR: Only show button for students already plotted by Koordinator
     if (student.plot_meja) {
       // Student already plotted - show single button to escort to assigned table
       const mejaNum = student.plot_meja.replace('meja-', '');
@@ -694,7 +694,7 @@ function createStudentCard(student) {
         `;
       }
     } else {
-      // Student not yet plotted - show info message
+      // Student NOT plotted yet - ONLY show info message (NO buttons!)
       escortButtons = `
         <div class="mt-2 p-2 bg-slate-50 border border-slate-200 rounded">
           <p class="text-xs text-slate-600 font-semibold">⏳ Belum Di-plot</p>
