@@ -305,20 +305,57 @@ async function resetAllData() {
   if (!confirmed2) return;
   
   try {
-    const response = await fetch(API_URL);
-    const students = await response.json();
+    console.log('🔄 Memulai reset semua data...');
     
-    for (const student of students) {
-      await fetch(API_URL, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: student.id })
-      });
+    const response = await fetch(API_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch students: ${response.status}`);
     }
     
-    alert(`✅ Semua data berhasil dihapus!\n\n${students.length} siswa telah dihapus dari database`);
+    const students = await response.json();
+    console.log(`📊 Total siswa yang akan dihapus: ${students.length}`);
+    
+    if (students.length === 0) {
+      alert('ℹ️ Tidak ada data siswa untuk dihapus');
+      return;
+    }
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const student of students) {
+      try {
+        console.log(`🗑️ Menghapus: ${student.nama_murid} (ID: ${student.id})`);
+        
+        const deleteResponse = await fetch(API_URL, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: student.id })
+        });
+        
+        if (deleteResponse.ok) {
+          successCount++;
+        } else {
+          console.error(`❌ Gagal hapus ${student.nama_murid}: ${deleteResponse.status}`);
+          failCount++;
+        }
+      } catch (err) {
+        console.error(`❌ Error hapus ${student.nama_murid}:`, err);
+        failCount++;
+      }
+    }
+    
+    console.log(`✅ Selesai! Berhasil: ${successCount}, Gagal: ${failCount}`);
+    
+    if (failCount > 0) {
+      alert(`⚠️ Reset selesai dengan warning!\n\n✅ Berhasil dihapus: ${successCount} siswa\n❌ Gagal dihapus: ${failCount} siswa\n\nCek console untuk detail error`);
+    } else {
+      alert(`✅ Semua data berhasil dihapus!\n\n${successCount} siswa telah dihapus dari database`);
+    }
+    
     loadSystemInfo();
   } catch (error) {
+    console.error('❌ Error reset all data:', error);
     alert('❌ Error: ' + error.message);
   }
 }
