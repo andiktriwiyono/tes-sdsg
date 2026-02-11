@@ -23,6 +23,33 @@ async function loadData() {
     studentsData = await studentsResponse.json();
     teachersData = await teachersResponse.json();
     
+    console.log('=== DATA LOADED ===');
+    console.log('Total students:', studentsData.length);
+    console.log('Sample student data:', studentsData[0]);
+    
+    // Debug: Check sesi values
+    const sesiCounts = {};
+    studentsData.forEach(s => {
+      const sesi = s.sesi || 'undefined';
+      sesiCounts[sesi] = (sesiCounts[sesi] || 0) + 1;
+    });
+    console.log('Sesi distribution:', sesiCounts);
+    
+    // Debug: Check sudah_test values
+    const testStatus = {
+      completed: studentsData.filter(s => s.sudah_test === 1).length,
+      notCompleted: studentsData.filter(s => s.sudah_test !== 1).length
+    };
+    console.log('Test status:', testStatus);
+    
+    // Debug: Check gender values
+    const genderCounts = {};
+    studentsData.forEach(s => {
+      const gender = s.jenis_kelamin || 'undefined';
+      genderCounts[gender] = (genderCounts[gender] || 0) + 1;
+    });
+    console.log('Gender distribution:', genderCounts);
+    
     applyFilters();
     generateReports();
     updateTimestamp();
@@ -38,41 +65,75 @@ function applyFilters() {
   const genderFilter = document.getElementById('filter-gender').value;
   const statusFilter = document.getElementById('filter-status').value;
   
-  console.log('Applying filters:', { sesiFilter, genderFilter, statusFilter });
+  console.log('=== APPLYING FILTERS ===');
+  console.log('Filters:', { sesiFilter, genderFilter, statusFilter });
   console.log('Total students before filter:', studentsData.length);
   
   filteredData = studentsData.filter(student => {
-    // Sesi filter - normalize sesi value (handle both 'sesi1' and '1' formats)
-    let studentSesiNumber;
-    if (typeof student.sesi === 'string') {
-      studentSesiNumber = student.sesi.replace('sesi', '');
-    } else if (typeof student.sesi === 'number') {
-      studentSesiNumber = String(student.sesi);
-    } else {
-      studentSesiNumber = '1'; // default to sesi 1
-    }
+    let passedSesi = true;
+    let passedGender = true;
+    let passedStatus = true;
     
-    if (sesiFilter !== 'all' && studentSesiNumber !== sesiFilter) {
-      return false;
+    // Sesi filter - normalize sesi value (handle both 'sesi1' and '1' formats)
+    if (sesiFilter !== 'all') {
+      let studentSesiNumber;
+      if (typeof student.sesi === 'string') {
+        studentSesiNumber = student.sesi.replace('sesi', '');
+      } else if (typeof student.sesi === 'number') {
+        studentSesiNumber = String(student.sesi);
+      } else {
+        studentSesiNumber = '1'; // default to sesi 1
+      }
+      
+      passedSesi = (studentSesiNumber === sesiFilter);
+      if (!passedSesi) return false;
     }
     
     // Gender filter
-    if (genderFilter !== 'all' && student.jenis_kelamin !== genderFilter) {
-      return false;
+    if (genderFilter !== 'all') {
+      passedGender = (student.jenis_kelamin === genderFilter);
+      if (!passedGender) return false;
     }
     
     // Status filter - check sudah_test field
-    if (statusFilter === 'completed' && student.sudah_test !== 1) {
-      return false;
+    if (statusFilter === 'completed') {
+      passedStatus = (student.sudah_test === 1);
+      if (!passedStatus) return false;
     }
-    if (statusFilter === 'not-completed' && student.sudah_test === 1) {
-      return false;
+    if (statusFilter === 'not-completed') {
+      passedStatus = (student.sudah_test !== 1);
+      if (!passedStatus) return false;
     }
     
     return true;
   });
   
   console.log('Total students after filter:', filteredData.length);
+  if (filteredData.length > 0) {
+    console.log('Sample filtered student:', filteredData[0]);
+  } else {
+    console.log('NO STUDENTS MATCHED THE FILTER!');
+    // Show which students failed each filter
+    if (sesiFilter !== 'all') {
+      const sesiMatches = studentsData.filter(s => {
+        let sn = typeof s.sesi === 'string' ? s.sesi.replace('sesi', '') : String(s.sesi || 1);
+        return sn === sesiFilter;
+      });
+      console.log(`Students matching sesi ${sesiFilter}:`, sesiMatches.length);
+    }
+    if (genderFilter !== 'all') {
+      const genderMatches = studentsData.filter(s => s.jenis_kelamin === genderFilter);
+      console.log(`Students matching gender ${genderFilter}:`, genderMatches.length);
+    }
+    if (statusFilter !== 'all') {
+      const statusMatches = studentsData.filter(s => {
+        if (statusFilter === 'completed') return s.sudah_test === 1;
+        if (statusFilter === 'not-completed') return s.sudah_test !== 1;
+        return true;
+      });
+      console.log(`Students matching status ${statusFilter}:`, statusMatches.length);
+    }
+  }
 }
 
 // Generate all reports
