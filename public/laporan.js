@@ -38,20 +38,41 @@ function applyFilters() {
   const genderFilter = document.getElementById('filter-gender').value;
   const statusFilter = document.getElementById('filter-status').value;
   
+  console.log('Applying filters:', { sesiFilter, genderFilter, statusFilter });
+  console.log('Total students before filter:', studentsData.length);
+  
   filteredData = studentsData.filter(student => {
-    // Sesi filter - normalize sesi value (remove 'sesi' prefix)
-    const studentSesiNumber = (student.sesi || 'sesi1').replace('sesi', '');
-    if (sesiFilter !== 'all' && studentSesiNumber != sesiFilter) return false;
+    // Sesi filter - normalize sesi value (handle both 'sesi1' and '1' formats)
+    let studentSesiNumber;
+    if (typeof student.sesi === 'string') {
+      studentSesiNumber = student.sesi.replace('sesi', '');
+    } else if (typeof student.sesi === 'number') {
+      studentSesiNumber = String(student.sesi);
+    } else {
+      studentSesiNumber = '1'; // default to sesi 1
+    }
+    
+    if (sesiFilter !== 'all' && studentSesiNumber !== sesiFilter) {
+      return false;
+    }
     
     // Gender filter
-    if (genderFilter !== 'all' && student.jenis_kelamin !== genderFilter) return false;
+    if (genderFilter !== 'all' && student.jenis_kelamin !== genderFilter) {
+      return false;
+    }
     
-    // Status filter
-    if (statusFilter === 'completed' && student.sudah_test !== 1) return false;
-    if (statusFilter === 'not-completed' && student.sudah_test === 1) return false;
+    // Status filter - check sudah_test field
+    if (statusFilter === 'completed' && student.sudah_test !== 1) {
+      return false;
+    }
+    if (statusFilter === 'not-completed' && student.sudah_test === 1) {
+      return false;
+    }
     
     return true;
   });
+  
+  console.log('Total students after filter:', filteredData.length);
 }
 
 // Generate all reports
@@ -103,8 +124,15 @@ function generateSesiReport() {
   
   container.innerHTML = sesiData.map(({ sesi, range }) => {
     const sesiStudents = filteredData.filter(s => {
-      const studentSesiNumber = (s.sesi || 'sesi1').replace('sesi', '');
-      return studentSesiNumber == sesi;
+      let studentSesiNumber;
+      if (typeof s.sesi === 'string') {
+        studentSesiNumber = s.sesi.replace('sesi', '');
+      } else if (typeof s.sesi === 'number') {
+        studentSesiNumber = String(s.sesi);
+      } else {
+        studentSesiNumber = '1';
+      }
+      return studentSesiNumber === String(sesi);
     });
     const completed = sesiStudents.filter(s => s.sudah_test === 1).length;
     const notCompleted = sesiStudents.length - completed;
@@ -258,6 +286,16 @@ function generateStudentsDetail() {
     
     const mejaText = s.meja_asal ? s.meja_asal.replace('meja-', '') : '-';
     
+    // Normalize sesi display
+    let sesiDisplay;
+    if (typeof s.sesi === 'string') {
+      sesiDisplay = s.sesi.replace('sesi', '');
+    } else if (typeof s.sesi === 'number') {
+      sesiDisplay = String(s.sesi);
+    } else {
+      sesiDisplay = '1';
+    }
+    
     let duration = '-';
     if (s.sudah_test === 1 && s.test_start_time && s.test_end_time) {
       const start = new Date(s.test_start_time);
@@ -270,7 +308,7 @@ function generateStudentsDetail() {
         <td class="px-4 py-3 text-sm text-slate-600">${i + 1}</td>
         <td class="px-4 py-3 text-sm font-mono text-slate-800">${s.no_pendaftaran}</td>
         <td class="px-4 py-3 text-sm text-slate-800">${s.nama_murid}</td>
-        <td class="px-4 py-3 text-sm text-slate-600">Sesi ${(s.sesi || 'sesi1').replace('sesi', '')}</td>
+        <td class="px-4 py-3 text-sm text-slate-600">Sesi ${sesiDisplay}</td>
         <td class="px-4 py-3 text-sm">${genderIcon} ${s.jenis_kelamin}</td>
         <td class="px-4 py-3">${statusBadge}</td>
         <td class="px-4 py-3 text-sm text-slate-800">${mejaText}</td>
