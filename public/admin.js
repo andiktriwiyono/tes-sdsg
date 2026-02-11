@@ -574,7 +574,7 @@ function downloadTemplate() {
     // Download
     XLSX.writeFile(wb, 'Template_Import_Siswa.xlsx');
     
-    alert('✅ Template berhasil didownload!\n\nPetunjuk:\n1. Isi data siswa sesuai format\n2. Jenis Kelamin: L (Laki-laki) atau P (Perempuan)\n3. Sesi: 1, 2, atau 3\n4. Simpan dan upload kembali');
+    alert('✅ Template berhasil didownload!\n\nPetunjuk:\n1. Isi data siswa sesuai format\n2. Jenis Kelamin: L (Laki-laki) atau P (Perempuan)\n3. Sesi: 1, 2, atau 3 (bisa juga "sesi1", "Sesi 1", dll - akan dinormalisasi otomatis)\n4. Jika kolom Sesi kosong, akan auto-assign berdasarkan No Pendaftaran\n5. Simpan dan upload kembali');
   } catch (error) {
     console.error('Download template error:', error);
     alert('❌ Error download template: ' + error.message + '\n\nCoba refresh halaman dan coba lagi.');
@@ -625,15 +625,21 @@ async function importStudentsFromFile(file) {
             continue;
           }
 
-          // Validate sesi
-          const sesiValue = sesi ? sesi.toString() : '';
-          if (sesiValue && !['1', '2', '3'].includes(sesiValue)) {
-            errors.push(`Baris ${rowNum}: Sesi harus 1, 2, atau 3 (${namaMurid})`);
-            continue;
+          // Normalize sesi value from Excel (accept various formats)
+          let finalSesi = '';
+          if (sesi) {
+            const sesiStr = sesi.toString().toLowerCase().trim();
+            // Extract number from various formats: "1", "sesi1", "Sesi 1", "sesi3", etc.
+            const sesiMatch = sesiStr.match(/(\d+)/);
+            if (sesiMatch) {
+              const sesiNum = sesiMatch[1];
+              if (['1', '2', '3'].includes(sesiNum)) {
+                finalSesi = sesiNum;
+              }
+            }
           }
 
-          // Auto-assign sesi based on no_pendaftaran if not provided
-          let finalSesi = sesiValue;
+          // Auto-assign sesi based on no_pendaftaran if not provided or invalid
           if (!finalSesi) {
             const no = parseInt(noPendaftaran);
             if (no >= 1 && no <= 35) finalSesi = '1';
