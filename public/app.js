@@ -536,12 +536,19 @@ function createStudentCard(student) {
     const isInTop5 = queuePosition <= 5; // Top 5 siswa bisa di-ploting
     
     if (isInTop5) {
-      // Check which tables are occupied
+      // Check which tables are occupied (siswa sudah di meja)
       const table1Occupied = studentsData.some(s => s.lokasi === 'meja-1');
       const table2Occupied = studentsData.some(s => s.lokasi === 'meja-2');
       const table3Occupied = studentsData.some(s => s.lokasi === 'meja-3');
       const table4Occupied = studentsData.some(s => s.lokasi === 'meja-4');
       const table5Occupied = studentsData.some(s => s.lokasi === 'meja-5');
+      
+      // Check which tables are already plotted (siswa sudah di-plot tapi belum diantar)
+      const table1Plotted = studentsData.some(s => s.plot_meja === 'meja-1' && s.id !== student.id);
+      const table2Plotted = studentsData.some(s => s.plot_meja === 'meja-2' && s.id !== student.id);
+      const table3Plotted = studentsData.some(s => s.plot_meja === 'meja-3' && s.id !== student.id);
+      const table4Plotted = studentsData.some(s => s.plot_meja === 'meja-4' && s.id !== student.id);
+      const table5Plotted = studentsData.some(s => s.plot_meja === 'meja-5' && s.id !== student.id);
       
       // Check which tables are on break
       const table1Break = teachersData.some(t => t.meja_number === 1 && t.is_break === 1);
@@ -550,52 +557,62 @@ function createStudentCard(student) {
       const table4Break = teachersData.some(t => t.meja_number === 4 && t.is_break === 1);
       const table5Break = teachersData.some(t => t.meja_number === 5 && t.is_break === 1);
       
-      // Count available tables (not occupied AND not on break)
+      // Count available tables (not occupied AND not plotted AND not on break)
       const availableTables = [
-        !table1Occupied && !table1Break,
-        !table2Occupied && !table2Break,
-        !table3Occupied && !table3Break,
-        !table4Occupied && !table4Break,
-        !table5Occupied && !table5Break
+        !table1Occupied && !table1Plotted && !table1Break,
+        !table2Occupied && !table2Plotted && !table2Break,
+        !table3Occupied && !table3Plotted && !table3Break,
+        !table4Occupied && !table4Plotted && !table4Break,
+        !table5Occupied && !table5Plotted && !table5Break
       ].filter(Boolean).length;
       
-      // Generate buttons (disabled if table occupied OR on break)
+      // Generate buttons (disabled if table occupied OR plotted OR on break)
       const btn1 = table1Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 1 terisi">M1</button>`
+        : table1Plotted
+        ? `<button class="bg-blue-300 text-blue-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 1 sudah di-plot">📍</button>`
         : table1Break
         ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 1 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="1">M1</button>`;
       
       const btn2 = table2Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 2 terisi">M2</button>`
+        : table2Plotted
+        ? `<button class="bg-blue-300 text-blue-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 2 sudah di-plot">📍</button>`
         : table2Break
         ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 2 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="2">M2</button>`;
       
       const btn3 = table3Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 3 terisi">M3</button>`
+        : table3Plotted
+        ? `<button class="bg-blue-300 text-blue-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 3 sudah di-plot">📍</button>`
         : table3Break
         ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 3 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="3">M3</button>`;
       
       const btn4 = table4Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 4 terisi">M4</button>`
+        : table4Plotted
+        ? `<button class="bg-blue-300 text-blue-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 4 sudah di-plot">📍</button>`
         : table4Break
         ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 4 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="4">M4</button>`;
       
       const btn5 = table5Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 5 terisi">M5</button>`
+        : table5Plotted
+        ? `<button class="bg-blue-300 text-blue-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 5 sudah di-plot">📍</button>`
         : table5Break
         ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 5 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="5">M5</button>`;
       
       if (availableTables > 0) {
-        // Show buttons for all 5 tables (disabled if occupied or on break)
+        // Show buttons for all 5 tables (disabled if occupied or plotted or on break)
         claimButtons = `
           <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded">
-            <p class="text-xs text-green-700 font-semibold mb-1">🔔 PLOTING SISWA INI!</p>
-            <p class="text-xs text-green-600 mb-2">Antrian ${queuePosition} - Pilih meja aktif (${availableTables}/5):</p>
+            <p class="text-xs text-green-700 font-semibold mb-1">🔔 PLOT SISWA INI!</p>
+            <p class="text-xs text-green-600 mb-2">Antrian ${queuePosition} - Pilih meja tersedia (${availableTables}/5):</p>
             <div class="grid grid-cols-5 gap-1">
               ${btn1}
               ${btn2}
@@ -606,12 +623,15 @@ function createStudentCard(student) {
           </div>
         `;
       } else {
-        // All tables occupied or on break
+        // All tables occupied or plotted or on break
         const breakCount = [table1Break, table2Break, table3Break, table4Break, table5Break].filter(Boolean).length;
         const occupiedCount = [table1Occupied, table2Occupied, table3Occupied, table4Occupied, table5Occupied].filter(Boolean).length;
+        const plottedCount = [table1Plotted, table2Plotted, table3Plotted, table4Plotted, table5Plotted].filter(Boolean).length;
         
         let statusMessage = '';
-        if (breakCount > 0 && occupiedCount > 0) {
+        if (plottedCount > 0) {
+          statusMessage = `${occupiedCount} terisi, ${plottedCount} di-plot, ${breakCount} istirahat`;
+        } else if (breakCount > 0 && occupiedCount > 0) {
           statusMessage = `${occupiedCount} meja terisi, ${breakCount} meja istirahat`;
         } else if (breakCount > 0) {
           statusMessage = `${breakCount} meja sedang istirahat`;
@@ -630,7 +650,7 @@ function createStudentCard(student) {
       claimButtons = `
         <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded">
           <p class="text-xs text-amber-700 font-semibold">⏳ Antrian ke-${queuePosition}</p>
-          <p class="text-xs text-amber-600 mt-1">Tunggu 5 siswa pertama di-ploting dulu</p>
+          <p class="text-xs text-amber-600 mt-1">Tunggu 5 siswa pertama di-plot dulu</p>
         </div>
       `;
     }
