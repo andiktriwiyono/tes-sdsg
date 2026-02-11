@@ -53,7 +53,9 @@ async function initDatabase() {
       meja_asal TEXT DEFAULT NULL,
       sesi TEXT DEFAULT 'sesi1',
       escort_name TEXT DEFAULT NULL,
-      escort_phone TEXT DEFAULT NULL
+      escort_phone TEXT DEFAULT NULL,
+      plot_meja TEXT DEFAULT NULL,
+      status_antar TEXT DEFAULT NULL
     )
   `);
   
@@ -106,7 +108,9 @@ exports.handler = async (event) => {
         meja_asal: row[18],
         sesi: row[19] || 'sesi1',
         escort_name: row[20],
-        escort_phone: row[21]
+        escort_phone: row[21],
+        plot_meja: row[22],
+        status_antar: row[23]
       })) : [];
       
       return {
@@ -253,6 +257,16 @@ exports.handler = async (event) => {
       if (data.meja_asal !== undefined) {
         updates.push('meja_asal = ?');
         values.push(data.meja_asal);
+      }
+      
+      if (data.plot_meja !== undefined) {
+        updates.push('plot_meja = ?');
+        values.push(data.plot_meja);
+      }
+      
+      if (data.status_antar !== undefined) {
+        updates.push('status_antar = ?');
+        values.push(data.status_antar);
       }
       
       updates.push('updated_at = ?');

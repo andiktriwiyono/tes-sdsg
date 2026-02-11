@@ -471,11 +471,11 @@ function createStudentCard(student) {
     queueBadge = `<span class="text-xs px-2 py-0.5 rounded ${queueColor} font-bold">${queueIcon} Antrian ${queuePosition}</span>`;
   }
   
-  // Badge for students waiting to be picked up (sudah di-ploting oleh koordinator)
+  // Badge for students waiting to be picked up (sudah di-plot oleh koordinator)
   let waitingPickupBadge = '';
-  if (isInTestPool && student.menunggu_dijemput === 1 && student.target_meja) {
-    const mejaNum = student.target_meja.replace('meja-', '');
-    waitingPickupBadge = `<span class="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-bold animate-pulse">🚶 Menunggu Dijemput → M${mejaNum}</span>`;
+  if (isInTestPool && student.plot_meja) {
+    const mejaNum = student.plot_meja.replace('meja-', '');
+    waitingPickupBadge = `<span class="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-bold animate-pulse">🚶 Diantar ke M${mejaNum}</span>`;
   }
   
   const buttonIcon = isInDaftar ? '✕' : '↩';
@@ -640,12 +640,12 @@ function createStudentCard(student) {
   let escortButtons = '';
   if (isInTestPool && currentUser && currentUser.role === 'PETUGAS_ANTAR') {
     // Check if student is already plotted by coordinator
-    if (student.menunggu_dijemput === 1 && student.target_meja) {
+    if (student.plot_meja) {
       // Student already plotted - show single button to escort to assigned table
-      const mejaNum = student.target_meja.replace('meja-', '');
+      const mejaNum = student.plot_meja.replace('meja-', '');
       
       // Check if target table is occupied
-      const targetOccupied = studentsData.some(s => s.lokasi === student.target_meja);
+      const targetOccupied = studentsData.some(s => s.lokasi === student.plot_meja);
       
       // Check if target table is on break
       const targetBreak = teachersData.some(t => t.meja_number === parseInt(mejaNum) && t.is_break === 1);
@@ -668,7 +668,7 @@ function createStudentCard(student) {
         escortButtons = `
           <div class="mt-2 p-2 bg-cyan-50 border border-cyan-200 rounded">
             <p class="text-xs text-cyan-700 font-semibold mb-1">🚶 JEMPUT & ANTAR!</p>
-            <p class="text-xs text-cyan-600 mb-2">Sudah di-ploting ke Meja ${mejaNum}</p>
+            <p class="text-xs text-cyan-600 mb-2">Sudah di-plot ke Meja ${mejaNum}</p>
             <button class="escort-btn w-full bg-cyan-500 hover:bg-cyan-600 text-white text-xs py-1.5 px-2 rounded transition-colors font-medium" data-id="${student.id}" data-table="${mejaNum}">✓ Jemput & Antar ke M${mejaNum}</button>
           </div>
         `;
@@ -1051,18 +1051,19 @@ async function confirmDelete(student) {
 
 async function completeTest(student) {
   try {
-    // Mark as completed but keep at table for Petugas Antar to pick up
+    // Mark as completed and set status to wait for pickup
     await fetch(API_URL, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         id: student.id,
         sudah_test: 1,
-        test_end_time: new Date().toISOString()
+        test_end_time: new Date().toISOString(),
+        status_antar: 'menunggu-jemput'
       })
     });
     
-    showMessage(`${student.nama_murid} telah selesai test. Menunggu Petugas Antar-Jemput untuk diantar kembali.`, 'success');
+    showMessage(`${student.nama_murid} telah selesai test. Menunggu Petugas Antar untuk diantar kembali.`, 'success');
     await loadStudents();
   } catch (error) {
     showMessage('Gagal menyelesaikan test', 'error');
@@ -1087,22 +1088,22 @@ async function plotingStudent(student, tableNum) {
       return;
     }
     
-    // Koordinator: Ploting siswa - TANDAI untuk dijemput oleh Petugas Antar
+    // Koordinator: Plot siswa - TANDAI untuk dijemput oleh Petugas Antar
     await fetch(API_URL, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         id: student.id,
-        menunggu_dijemput: 1,
-        target_meja: `meja-${tableNum}`
+        plot_meja: `meja-${tableNum}`,
+        status_antar: 'menunggu-antar'
         // Siswa tetap di lokasi 'test' (pool test)
       })
     });
     
-    showMessage(`${student.nama_murid} telah di-ploting ke Meja ${tableNum}. Menunggu Petugas Antar untuk menjemput.`, 'success');
+    showMessage(`${student.nama_murid} telah di-plot ke Meja ${tableNum}. Menunggu Petugas Antar untuk menjemput.`, 'success');
     await loadStudents();
   } catch (error) {
-    showMessage('Gagal ploting siswa', 'error');
+    showMessage('Gagal plot siswa', 'error');
   }
 }
 
@@ -1132,8 +1133,8 @@ async function escortStudent(student, tableNum) {
         id: student.id,
         lokasi: `meja-${tableNum}`,
         meja_asal: `meja-${tableNum}`, // Save meja asal
-        menunggu_dijemput: 0,
-        target_meja: null,
+        plot_meja: null,
+        status_antar: null,
         test_start_time: new Date().toISOString()
       })
     });
@@ -1157,7 +1158,8 @@ async function returnStudent(student) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         id: student.id,
-        lokasi: returnLocation
+        lokasi: returnLocation,
+        status_antar: null
       })
     });
     
