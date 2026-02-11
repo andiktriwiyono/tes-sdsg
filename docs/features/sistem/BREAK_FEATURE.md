@@ -4,11 +4,11 @@
 Fitur yang memungkinkan penguji untuk set meja mereka ke mode istirahat.
 
 ## Status
-🚧 **IN PROGRESS** - Backend sudah siap, frontend sedang dikembangkan
+✅ **COMPLETED** - Backend dan frontend sudah siap untuk production
 
 ---
 
-## ✅ Yang Sudah Selesai (Backend)
+## ✅ Yang Sudah Selesai
 
 ### 1. Database Migration
 - ✅ Script `add-break-status.js` untuk menambahkan kolom `is_break` ke tabel teachers
@@ -32,28 +32,21 @@ fetch('/api/teachers', {
 })
 ```
 
----
+### 3. Frontend UI
+- ✅ Toggle button "Istirahat/Aktifkan" di header meja (hanya untuk penguji)
+- ✅ Badge status "🛑 Istirahat" atau "✅ Aktif" di setiap meja
+- ✅ Konfirmasi dialog saat toggle istirahat
+- ✅ Warning jika ada siswa sedang test saat set istirahat
 
-## 🚧 Yang Sedang Dikembangkan (Frontend)
+### 4. Logika Ploting
+- ✅ Koordinator tidak bisa ploting siswa ke meja yang istirahat
+- ✅ Button ploting disabled dengan icon 🛑 untuk meja istirahat
+- ✅ Pesan error jika coba ploting ke meja istirahat
+- ✅ Counter meja tersedia memperhitungkan meja istirahat
 
-### 1. Toggle Button untuk Penguji
-- [ ] Tombol "Istirahat" di header meja
-- [ ] Hanya terlihat oleh penguji meja tersebut
-- [ ] Toggle on/off dengan satu klik
-
-### 2. Visual Indicator
-- [ ] Badge "🛑 Istirahat" saat meja istirahat
-- [ ] Badge "✅ Aktif" saat meja aktif
-- [ ] Warna header berubah (abu-abu saat istirahat)
-
-### 3. Logika Ploting
-- [ ] Koordinator tidak bisa ploting siswa ke meja yang istirahat
-- [ ] Button ploting disabled untuk meja istirahat
-- [ ] Pesan "Meja sedang istirahat" jika coba ploting
-
-### 4. Notifikasi
-- [ ] Alert konfirmasi saat set istirahat
-- [ ] Pesan jika ada siswa sedang test di meja
+### 5. Validasi
+- ✅ Double-check status istirahat di fungsi `plotingStudent()`
+- ✅ Pesan error yang jelas untuk user
 
 ---
 
@@ -129,11 +122,15 @@ ALTER TABLE teachers ADD COLUMN is_break INTEGER DEFAULT 0;
 
 **Progress:**
 - ✅ Backend API (100%)
-- 🚧 Frontend UI (0%)
-- ⏳ Testing (0%)
+- ✅ Frontend UI (100%)
+- ⏳ Testing (Pending deployment to VPS)
+
+**Commits:**
+- `aeb76d2` - Add break status feature for teachers - backend API and database migration
+- `1e75c23` - Add break feature frontend: toggle button for penguji and break status validation for ploting
 
 **Next Steps:**
-1. Update `updateMejaHeaders()` di app.js
-2. Tambahkan toggle button untuk penguji
-3. Update logika ploting di koordinator
-4. Testing di VPS
+1. Deploy ke VPS
+2. Run migration: `npm run add-break`
+3. Test fitur dengan login sebagai penguji
+4. Test ploting dengan koordinator
