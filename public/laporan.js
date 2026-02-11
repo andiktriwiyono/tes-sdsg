@@ -77,39 +77,44 @@ function applyFilters() {
   }
   
   filteredData = studentsData.filter(student => {
-    let passedSesi = true;
-    let passedGender = true;
-    let passedStatus = true;
-    
-    // Sesi filter - normalize sesi value (handle both 'sesi1' and '1' formats)
+    // Sesi filter - handle both string ('sesi1') and number (1) formats
     if (sesiFilter !== 'all') {
       let studentSesiNumber;
+      
       if (typeof student.sesi === 'string') {
+        // If sesi is string like 'sesi1', extract the number
         studentSesiNumber = student.sesi.replace('sesi', '');
       } else if (typeof student.sesi === 'number') {
+        // If sesi is already a number, convert to string
         studentSesiNumber = String(student.sesi);
       } else {
-        studentSesiNumber = '1'; // default to sesi 1
+        // Default to sesi 1
+        studentSesiNumber = '1';
       }
       
-      passedSesi = (studentSesiNumber === sesiFilter);
-      if (!passedSesi) return false;
+      if (studentSesiNumber !== sesiFilter) {
+        return false;
+      }
     }
     
     // Gender filter
     if (genderFilter !== 'all') {
-      passedGender = (student.jenis_kelamin === genderFilter);
-      if (!passedGender) return false;
+      if (student.jenis_kelamin !== genderFilter) {
+        return false;
+      }
     }
     
-    // Status filter - check sudah_test field
+    // Status filter - check sudah_test field (0 or 1)
     if (statusFilter === 'completed') {
-      passedStatus = (student.sudah_test === 1);
-      if (!passedStatus) return false;
+      if (student.sudah_test !== 1) {
+        return false;
+      }
     }
     if (statusFilter === 'not-completed') {
-      passedStatus = (student.sudah_test !== 1);
-      if (!passedStatus) return false;
+      // Check for 0, null, or undefined
+      if (student.sudah_test === 1) {
+        return false;
+      }
     }
     
     return true;
@@ -120,25 +125,51 @@ function applyFilters() {
     console.log('Sample filtered student:', filteredData[0]);
   } else {
     console.log('NO STUDENTS MATCHED THE FILTER!');
-    // Show which students failed each filter
+    console.log('Debugging individual filters:');
+    
+    // Debug each filter separately
     if (sesiFilter !== 'all') {
       const sesiMatches = studentsData.filter(s => {
         let sn = typeof s.sesi === 'string' ? s.sesi.replace('sesi', '') : String(s.sesi || 1);
         return sn === sesiFilter;
       });
-      console.log(`Students matching sesi ${sesiFilter}:`, sesiMatches.length);
+      console.log(`  Sesi ${sesiFilter}: ${sesiMatches.length} students`);
     }
+    
     if (genderFilter !== 'all') {
       const genderMatches = studentsData.filter(s => s.jenis_kelamin === genderFilter);
-      console.log(`Students matching gender ${genderFilter}:`, genderMatches.length);
+      console.log(`  Gender ${genderFilter}: ${genderMatches.length} students`);
     }
+    
     if (statusFilter !== 'all') {
       const statusMatches = studentsData.filter(s => {
         if (statusFilter === 'completed') return s.sudah_test === 1;
         if (statusFilter === 'not-completed') return s.sudah_test !== 1;
         return true;
       });
-      console.log(`Students matching status ${statusFilter}:`, statusMatches.length);
+      console.log(`  Status ${statusFilter}: ${statusMatches.length} students`);
+    }
+    
+    // Try combined filters step by step
+    let tempFiltered = [...studentsData];
+    if (sesiFilter !== 'all') {
+      tempFiltered = tempFiltered.filter(s => {
+        let sn = typeof s.sesi === 'string' ? s.sesi.replace('sesi', '') : String(s.sesi || 1);
+        return sn === sesiFilter;
+      });
+      console.log(`  After sesi filter: ${tempFiltered.length} students`);
+    }
+    if (genderFilter !== 'all') {
+      tempFiltered = tempFiltered.filter(s => s.jenis_kelamin === genderFilter);
+      console.log(`  After gender filter: ${tempFiltered.length} students`);
+    }
+    if (statusFilter !== 'all') {
+      tempFiltered = tempFiltered.filter(s => {
+        if (statusFilter === 'completed') return s.sudah_test === 1;
+        if (statusFilter === 'not-completed') return s.sudah_test !== 1;
+        return true;
+      });
+      console.log(`  After status filter: ${tempFiltered.length} students`);
     }
   }
 }
