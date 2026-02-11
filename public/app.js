@@ -202,6 +202,64 @@ async function loadTeachers() {
   }
 }
 
+async function handleToggleBreak(e) {
+  const btn = e.target;
+  const mejaNumber = parseInt(btn.getAttribute('data-meja'));
+  const currentStatus = parseInt(btn.getAttribute('data-current-status'));
+  const newStatus = currentStatus === 1 ? 0 : 1; // Toggle
+  
+  // Confirm action
+  const action = newStatus === 1 ? 'ISTIRAHAT' : 'AKTIFKAN';
+  const message = newStatus === 1 
+    ? `⏸️ Set Meja ${mejaNumber} ke mode ISTIRAHAT?\n\nMeja tidak akan menerima siswa baru dari Pool Test.\n\nSiswa yang sedang test bisa diselesaikan terlebih dahulu.`
+    : `▶️ AKTIFKAN kembali Meja ${mejaNumber}?\n\nMeja akan bisa menerima siswa baru dari Pool Test.`;
+  
+  if (!confirm(message)) return;
+  
+  // Check if there's a student currently testing
+  const studentAtMeja = studentsData.find(s => s.lokasi === `meja-${mejaNumber}`);
+  if (newStatus === 1 && studentAtMeja && studentAtMeja.sudah_test !== 1) {
+    const confirmWithStudent = confirm(
+      `⚠️ Ada siswa sedang test di meja ini:\n\n` +
+      `${studentAtMeja.nama_murid} (${studentAtMeja.no_pendaftaran})\n\n` +
+      `Sebaiknya selesaikan test siswa ini dulu.\n\n` +
+      `Tetap lanjutkan istirahat?`
+    );
+    if (!confirmWithStudent) return;
+  }
+  
+  try {
+    btn.disabled = true;
+    btn.textContent = '⏳ Loading...';
+    
+    const response = await fetch(TEACHERS_API_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'toggle_break',
+        meja_number: mejaNumber,
+        is_break: newStatus === 1
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to toggle break status');
+    }
+    
+    // Reload teachers data to update UI
+    await loadTeachers();
+    
+    // Show success message
+    const statusText = newStatus === 1 ? '🛑 ISTIRAHAT' : '✅ AKTIF';
+    showMessage(`Meja ${mejaNumber} sekarang ${statusText}`, 'success');
+    
+  } catch (error) {
+    console.error('Error toggling break:', error);
+    showMessage('Gagal mengubah status istirahat', 'error');
+    btn.disabled = false;
+  }
+}
+
 function updateMejaHeaders() {
   // Group teachers by meja
   const teachersByMeja = {};
@@ -217,16 +275,52 @@ function updateMejaHeaders() {
     const element = document.getElementById(`meja-${i}-teachers`);
     if (element) {
       const teachers = teachersByMeja[i] || [];
+      const isBreak = teachers.length > 0 && teachers[0].is_break === 1;
+      
+      // Teacher names
+      let teacherNames = '';
       if (teachers.length === 2) {
-        // Display with line break instead of &
-        element.innerHTML = `${teachers[0].teacher_name}<br>${teachers[1].teacher_name}`;
+        teacherNames = `${teachers[0].teacher_name}<br>${teachers[1].teacher_name}`;
       } else if (teachers.length === 1) {
-        element.textContent = teachers[0].teacher_name;
+        teacherNames = teachers[0].teacher_name;
       } else {
-        element.textContent = 'Guru belum diatur';
+        teacherNames = 'Guru belum diatur';
       }
+      
+      // Break status badge
+      const breakBadge = isBreak 
+        ? '<span class="inline-block mt-1 px-2 py-1 bg-red-500 text-white text-xs rounded-full font-semibold">🛑 Istirahat</span>'
+        : '<span class="inline-block mt-1 px-2 py-1 bg-green-500 text-white text-xs rounded-full font-semibold">✅ Aktif</span>';
+      
+      // Toggle button for penguji (only show for their own meja)
+      let toggleButton = '';
+      if (currentUser && currentUser.role === `PENGUJI_MEJA_${i}`) {
+        const buttonText = isBreak ? '▶️ Aktifkan' : '⏸️ Istirahat';
+        const buttonColor = isBreak ? 'bg-green-600 hover:bg-green-700' : 'bg-amber-600 hover:bg-amber-700';
+        toggleButton = `
+          <button 
+            class="toggle-break-btn mt-2 w-full ${buttonColor} text-white text-xs py-1.5 px-2 rounded transition-colors font-medium"
+            data-meja="${i}"
+            data-current-status="${isBreak ? 1 : 0}">
+            ${buttonText}
+          </button>
+        `;
+      }
+      
+      element.innerHTML = `
+        <div class="text-purple-100 text-sm leading-relaxed">
+          ${teacherNames}
+        </div>
+        ${breakBadge}
+        ${toggleButton}
+      `;
     }
   }
+  
+  // Add event listeners for toggle buttons
+  document.querySelectorAll('.toggle-break-btn').forEach(btn => {
+    btn.addEventListener('click', handleToggleBreak);
+  });
 }
 
 function updateLastUpdate() {
@@ -442,36 +536,59 @@ function createStudentCard(student) {
       const table4Occupied = studentsData.some(s => s.lokasi === 'meja-4');
       const table5Occupied = studentsData.some(s => s.lokasi === 'meja-5');
       
-      // Count available tables
-      const availableTables = [!table1Occupied, !table2Occupied, !table3Occupied, !table4Occupied, !table5Occupied].filter(Boolean).length;
+      // Check which tables are on break
+      const table1Break = teachersData.some(t => t.meja_number === 1 && t.is_break === 1);
+      const table2Break = teachersData.some(t => t.meja_number === 2 && t.is_break === 1);
+      const table3Break = teachersData.some(t => t.meja_number === 3 && t.is_break === 1);
+      const table4Break = teachersData.some(t => t.meja_number === 4 && t.is_break === 1);
+      const table5Break = teachersData.some(t => t.meja_number === 5 && t.is_break === 1);
       
-      // Generate buttons (disabled if table occupied)
+      // Count available tables (not occupied AND not on break)
+      const availableTables = [
+        !table1Occupied && !table1Break,
+        !table2Occupied && !table2Break,
+        !table3Occupied && !table3Break,
+        !table4Occupied && !table4Break,
+        !table5Occupied && !table5Break
+      ].filter(Boolean).length;
+      
+      // Generate buttons (disabled if table occupied OR on break)
       const btn1 = table1Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 1 terisi">M1</button>`
+        : table1Break
+        ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 1 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="1">M1</button>`;
       
       const btn2 = table2Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 2 terisi">M2</button>`
+        : table2Break
+        ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 2 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="2">M2</button>`;
       
       const btn3 = table3Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 3 terisi">M3</button>`
+        : table3Break
+        ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 3 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="3">M3</button>`;
       
       const btn4 = table4Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 4 terisi">M4</button>`
+        : table4Break
+        ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 4 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="4">M4</button>`;
       
       const btn5 = table5Occupied 
         ? `<button class="bg-slate-300 text-slate-500 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 5 terisi">M5</button>`
+        : table5Break
+        ? `<button class="bg-amber-300 text-amber-700 text-xs py-1 px-1 rounded cursor-not-allowed font-medium" disabled title="Meja 5 istirahat">🛑</button>`
         : `<button class="claim-btn bg-purple-500 hover:bg-purple-600 text-white text-xs py-1 px-1 rounded transition-colors font-medium" data-id="${student.id}" data-table="5">M5</button>`;
       
       if (availableTables > 0) {
-        // Show buttons for all 5 tables (disabled if occupied)
+        // Show buttons for all 5 tables (disabled if occupied or on break)
         claimButtons = `
           <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded">
             <p class="text-xs text-green-700 font-semibold mb-1">🔔 PLOTING SISWA INI!</p>
-            <p class="text-xs text-green-600 mb-2">Antrian ${queuePosition} - Pilih meja kosong (${availableTables}/5):</p>
+            <p class="text-xs text-green-600 mb-2">Antrian ${queuePosition} - Pilih meja aktif (${availableTables}/5):</p>
             <div class="grid grid-cols-5 gap-1">
               ${btn1}
               ${btn2}
@@ -482,11 +599,23 @@ function createStudentCard(student) {
           </div>
         `;
       } else {
-        // All tables occupied
+        // All tables occupied or on break
+        const breakCount = [table1Break, table2Break, table3Break, table4Break, table5Break].filter(Boolean).length;
+        const occupiedCount = [table1Occupied, table2Occupied, table3Occupied, table4Occupied, table5Occupied].filter(Boolean).length;
+        
+        let statusMessage = '';
+        if (breakCount > 0 && occupiedCount > 0) {
+          statusMessage = `${occupiedCount} meja terisi, ${breakCount} meja istirahat`;
+        } else if (breakCount > 0) {
+          statusMessage = `${breakCount} meja sedang istirahat`;
+        } else {
+          statusMessage = 'Semua meja terisi';
+        }
+        
         claimButtons = `
           <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-            <p class="text-xs text-red-700 font-semibold">⏸️ Semua Meja Penuh</p>
-            <p class="text-xs text-red-600 mt-1">Tunggu ada meja yang selesai test</p>
+            <p class="text-xs text-red-700 font-semibold">⏸️ Tidak Ada Meja Tersedia</p>
+            <p class="text-xs text-red-600 mt-1">${statusMessage}</p>
           </div>
         `;
       }
@@ -756,6 +885,15 @@ async function plotingStudent(student, tableNum) {
     const tableStudents = studentsData.filter(s => s.lokasi === `meja-${tableNum}`);
     if (tableStudents.length >= 1) {
       showMessage(`Meja ${tableNum} sudah terisi! Selesaikan test siswa saat ini terlebih dahulu.`, 'error');
+      return;
+    }
+    
+    // Check if table is on break
+    const tableTeachers = teachersData.filter(t => t.meja_number === parseInt(tableNum));
+    const isOnBreak = tableTeachers.some(t => t.is_break === 1);
+    
+    if (isOnBreak) {
+      showMessage(`Meja ${tableNum} sedang istirahat! Pilih meja lain yang aktif.`, 'error');
       return;
     }
     
