@@ -1,0 +1,80 @@
+===============================================
+🔧 QUICK FIX: API ERROR & LOGIN TIDAK BISA
+===============================================
+
+ERROR:
+"Error loading users: SyntaxError: Unexpected token '<'"
+Login tidak bisa untuk semua user
+
+PENYEBAB:
+Database belum dimigrasi di VPS
+
+===============================================
+SOLUSI CEPAT (Copy-Paste):
+===============================================
+
+# 1. Login ke VPS
+ssh root@your-vps-ip
+
+# 2. Masuk ke folder
+cd /var/www/antrian-test
+
+# 3. Jalankan quick fix script
+bash scripts/vps-quick-fix.sh
+
+# ATAU manual:
+
+# 3a. Install dependencies
+npm install
+
+# 3b. Migrasi database
+node scripts/migrate-db-vps.js
+
+# 3c. Set permissions
+chmod 755 data
+chmod 644 data/antrian.db
+
+# 3d. Restart PM2
+pm2 restart antrian-test
+
+# 3e. Test API
+curl http://localhost:3000/api/users
+
+===============================================
+VERIFIKASI:
+===============================================
+
+1. Cek PM2 status:
+   pm2 status
+   (Harus "online")
+
+2. Cek logs:
+   pm2 logs antrian-test
+   (Tidak ada error)
+
+3. Test API:
+   curl http://localhost:3000/api/users
+   (Harus return JSON, bukan HTML)
+
+4. Test login di browser:
+   http://tes.sdsunangiri.sch.id
+   Username: admin
+   Password: admin123
+
+===============================================
+JIKA MASIH ERROR:
+===============================================
+
+1. Restart Nginx:
+   sudo systemctl restart nginx
+
+2. Cek Nginx logs:
+   sudo tail -f /var/log/nginx/antrian-test-error.log
+
+3. Lihat PM2 logs detail:
+   pm2 logs antrian-test --lines 50
+
+===============================================
+PANDUAN LENGKAP:
+docs/troubleshooting/VPS_API_ERROR_FIX.md
+===============================================
