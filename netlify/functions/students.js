@@ -86,32 +86,47 @@ exports.handler = async (event) => {
   try {
     if (event.httpMethod === 'GET') {
       const result = db.exec('SELECT * FROM students ORDER BY created_at DESC');
-      const students = result.length > 0 ? result[0].values.map(row => ({
-        id: row[0],
-        no_pendaftaran: row[1],
-        nama_murid: row[2],
-        jenis_kelamin: row[3],
-        nama_orang_tua: row[4],
-        status: row[5],
-        lokasi: row[6],
-        lokasi_asal: row[7],
-        sudah_test: row[8],
-        test_start_time: row[9],
-        test_end_time: row[10],
-        pool_entry_time: row[11],
-        tunggu1_entry_time: row[12],
-        tunggu2_entry_time: row[13],
-        menunggu_dijemput: row[14],
-        target_meja: row[15],
-        created_at: row[16],
-        updated_at: row[17],
-        meja_asal: row[18],
-        sesi: row[19] || 'sesi1',
-        escort_name: row[20],
-        escort_phone: row[21],
-        plot_meja: row[22],
-        status_antar: row[23]
-      })) : [];
+      const students = result.length > 0 ? result[0].values.map(row => {
+        // Normalize jenis_kelamin: convert L/P to Laki-laki/Perempuan
+        let jenis_kelamin = row[3];
+        if (jenis_kelamin === 'L') jenis_kelamin = 'Laki-laki';
+        if (jenis_kelamin === 'P') jenis_kelamin = 'Perempuan';
+        
+        // Normalize sesi: convert number to string format 'sesi1', 'sesi2', etc
+        let sesi = row[19];
+        if (typeof sesi === 'number') {
+          sesi = `sesi${sesi}`;
+        } else if (!sesi || sesi === '') {
+          sesi = 'sesi1';
+        }
+        
+        return {
+          id: row[0],
+          no_pendaftaran: row[1],
+          nama_murid: row[2],
+          jenis_kelamin: jenis_kelamin,
+          nama_orang_tua: row[4],
+          status: row[5],
+          lokasi: row[6],
+          lokasi_asal: row[7],
+          sudah_test: row[8],
+          test_start_time: row[9],
+          test_end_time: row[10],
+          pool_entry_time: row[11],
+          tunggu1_entry_time: row[12],
+          tunggu2_entry_time: row[13],
+          menunggu_dijemput: row[14],
+          target_meja: row[15],
+          created_at: row[16],
+          updated_at: row[17],
+          meja_asal: row[18],
+          sesi: sesi,
+          escort_name: row[20],
+          escort_phone: row[21],
+          plot_meja: row[22],
+          status_antar: row[23]
+        };
+      }) : [];
       
       return {
         statusCode: 200,

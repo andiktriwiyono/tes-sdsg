@@ -38,9 +38,19 @@
         
         // Test filter
         const filtered = students.filter(s => {
-          const sesiMatch = String(s.sesi) === '1';
+          const sesiMatch = s.sesi === 'sesi1';
           const genderMatch = s.jenis_kelamin === 'Laki-laki';
           const statusMatch = s.sudah_test !== 1;
+          
+          console.log('Testing student:', s.no_pendaftaran, {
+            sesi: s.sesi,
+            sesiMatch,
+            gender: s.jenis_kelamin,
+            genderMatch,
+            status: s.sudah_test,
+            statusMatch,
+            allMatch: sesiMatch && genderMatch && statusMatch
+          });
           
           return sesiMatch && genderMatch && statusMatch;
         });
