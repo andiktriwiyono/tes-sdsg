@@ -15,7 +15,7 @@ async function addPlotMejaColumn() {
     const buffer = fs.readFileSync(dbPath);
     const db = new SQL.Database(buffer);
 
-    console.log('🔧 Menambahkan kolom plot_meja dan status ke tabel students...');
+    console.log('🔧 Menambahkan kolom plot_meja dan status_antar ke tabel students...');
 
     // Check if columns already exist
     const tableInfo = db.exec("PRAGMA table_info(students)");
@@ -28,11 +28,11 @@ async function addPlotMejaColumn() {
       console.log('ℹ️  Kolom plot_meja sudah ada');
     }
 
-    if (!columns.includes('status')) {
-      db.run("ALTER TABLE students ADD COLUMN status TEXT DEFAULT NULL");
-      console.log('✅ Kolom status berhasil ditambahkan');
+    if (!columns.includes('status_antar')) {
+      db.run("ALTER TABLE students ADD COLUMN status_antar TEXT DEFAULT NULL");
+      console.log('✅ Kolom status_antar berhasil ditambahkan');
     } else {
-      console.log('ℹ️  Kolom status sudah ada');
+      console.log('ℹ️  Kolom status_antar sudah ada');
     }
 
     // Save database
@@ -43,7 +43,7 @@ async function addPlotMejaColumn() {
     console.log('✅ Migrasi database selesai!');
     console.log('\nKolom baru:');
     console.log('- plot_meja: Meja yang di-plot oleh koordinator (meja-1, meja-2, dll)');
-    console.log('- status: Status siswa (menunggu-antar, menunggu-jemput, dll)');
+    console.log('- status_antar: Status siswa (menunggu-antar, menunggu-jemput, dll)');
 
   } catch (error) {
     console.error('❌ Error:', error.message);
