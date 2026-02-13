@@ -425,6 +425,15 @@ function createStudentCard(student) {
     }
   }
   
+  // Origin room badge for students in Pool Test
+  let originBadge = '';
+  if (isInTestPool && student.lokasi_asal) {
+    const originLabel = student.lokasi_asal === 'tunggu1' ? 'Tunggu 1' : 'Tunggu 2';
+    const originIcon = student.lokasi_asal === 'tunggu1' ? '🕐' : '🕑';
+    const originColor = student.lokasi_asal === 'tunggu1' ? 'bg-amber-100 text-amber-700' : 'bg-orange-100 text-orange-700';
+    originBadge = `<span class="text-xs px-2 py-0.5 rounded ${originColor} font-semibold">${originIcon} dari ${originLabel}</span>`;
+  }
+  
   // Queue number badge for students in waiting rooms and pool test
   let queueBadge = '';
   if (isInWaitingRoom) {
@@ -737,6 +746,7 @@ function createStudentCard(student) {
           <span class="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">Sesi ${(student.sesi || 'sesi1').replace('sesi', '')}</span>
           <span class="text-xs px-2 py-0.5 rounded ${genderColor}">${genderIcon} ${student.jenis_kelamin}</span>
           <span class="text-xs px-2 py-0.5 rounded ${statusColors[student.lokasi] || statusColors['daftar']}">${statusLabels[student.lokasi] || 'Terdaftar'}</span>
+          ${originBadge}
           ${queueBadge}
           ${waitingPickupBadge}
           ${testBadge}
