@@ -1102,6 +1102,7 @@ async function returnStudent(student) {
       body: JSON.stringify({ 
         id: student.id,
         lokasi: returnLocation,
+        plot_meja: null,
         status_antar: null
       })
     });
